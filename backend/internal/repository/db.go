@@ -12,7 +12,7 @@ import (
 
 func NewDBConnection() (*sqlx.DB, error) {
 	dsn := fmt.Sprintf(
-		"host=%s port=5432 user=%s password=%s dbname=%s sslmode=require",
+		"host=%s port=5432 user=%s password=%s dbname=%s sslmode=disable",
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
