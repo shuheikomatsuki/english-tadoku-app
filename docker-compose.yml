@@ -42,5 +42,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  migrate:
+    image: migrate/migrate
+    volumes:
+      - ./backend/db/migrations:/migrations
+    command: ["-path", "/migrations", "-database", "postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable", up]
+    depends_on:
+      - db
+
 volumes:
   postgres_data:
