@@ -7,18 +7,28 @@
 package handler
 
 import (
-
+	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
 )
 
 type IAuthHandler interface {
-	// SignUp() error
-	// Login() error
+	SignUp() error
+	Login() error
 }
 
 type AuthHandler struct {
-
+	UserRepo repository.IUserRepository
 }
 
-func NewAuthHandler() IAuthHandler {
-	return &AuthHandler{}
+func NewAuthHandler(userRepo repository.IUserRepository) IAuthHandler {
+	return &AuthHandler{
+		UserRepo: userRepo,
+	}
+}
+
+func (h *AuthHandler) SignUp() error {
+	return nil
+}
+
+func (h *AuthHandler) Login() error {
+	return nil
 }
