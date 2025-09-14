@@ -7,12 +7,13 @@
 package handler
 
 import (
+	"github.com/labstack/echo/v4"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
 )
 
 type IAuthHandler interface {
-	SignUp() error
-	Login() error
+	SignUp(e echo.Context) error
+	Login(e echo.Context) error
 }
 
 type AuthHandler struct {
@@ -25,10 +26,10 @@ func NewAuthHandler(userRepo repository.IUserRepository) IAuthHandler {
 	}
 }
 
-func (h *AuthHandler) SignUp() error {
+func (h *AuthHandler) SignUp(e echo.Context) error {
 	return nil
 }
 
-func (h *AuthHandler) Login() error {
+func (h *AuthHandler) Login(e echo.Context) error {
 	return nil
 }
