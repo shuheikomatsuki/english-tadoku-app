@@ -7,17 +7,24 @@ import (
 )
 
 type IUserRepository interface {
-	// GetUserByID(id int) (*model.User, error)
-	// GetUserByEmail(email string) (*model.User, error)
-	// CreateUser(user *model.User) (int, error) // 作成したユーザーのIDを返す
-	// UpdateUserPassword(id int, passwordHash string) error
-	// DeleteUser(id int) error
+}
+
+type IStoryRepository interface {
+	// Create(story *model.Story) (string, error)
 }
 
 type sqlxUserRepository struct {
 	DB *sqlx.DB
 }
 
-func NewOrderRepository(db *sqlx.DB) IUserRepository {
+type sqlxStoryRepository struct {
+	DB *sqlx.DB
+}
+
+func NewUserRepository(db *sqlx.DB) IUserRepository {
 	return &sqlxUserRepository{DB: db}
+}
+
+func NewStoryRepository(db *sqlx.DB) IStoryRepository {
+	return &sqlxStoryRepository{DB: db}
 }
