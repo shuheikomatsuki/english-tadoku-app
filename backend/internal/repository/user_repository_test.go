@@ -107,7 +107,7 @@ func TestStoryRepository(t *testing.T) {
 	t.Run("GetUserStories", func(t *testing.T) {
 		storyCounts := []int{3, 4, 2, 1} // 各ユーザーのストーリ数
 		numUsers := len(storyCounts)
-		const limit = 10
+		const limit = 1
 		const offset = 0
 
 		users := make([]*model.User, numUsers)
@@ -136,6 +136,9 @@ func TestStoryRepository(t *testing.T) {
 				require.NoError(t, err, "failed to get User %d stories", i+1)
 
 				// 件数、所有者、順序を検証
+				if expectedCount > limit {
+					expectedCount = limit
+				}
 				assert.Len(t, fetchedStories, expectedCount, "should return %d stories for User %d", expectedCount, i+1)
 
 				for j, fetchedStory := range fetchedStories {
