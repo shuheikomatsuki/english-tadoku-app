@@ -105,45 +105,62 @@ func TestStoryRepository(t *testing.T) {
 	})
 
 	t.Run("GetUserStories", func(t *testing.T) {
-		// user := createTestUser(t, db)
-		// storiesToGet := newTestStory(user.ID)
-		// err := storyRepo.CreateStory(storiesToGet)
-		// require.NoError(t, err, "failed to create story for GetStories test")
-
-		// fetchedStories, err := storyRepo.GetUserStories(user.ID, 10, 0)
-
-		// require.NoError(t, err, "failed to get user stories")
-		// require.Len(t, fetchedStories, 1, "should return one story")
-		// assert.Equal(t, storiesToGet.Title, fetchedStories[0].Title, "story title should match")
-
 		userA := createTestUser(t, db)
 		userB := createTestUser(t, db)
 
-		storyA1 := createTestStory(t, db, storyRepo, userA.ID, "User A - Story 1")
-		time.Sleep(1 * time.Millisecond)
-		storyA2 := createTestStory(t, db, storyRepo, userA.ID, "User A - Story 2")
-		time.Sleep(1 * time.Millisecond)
-		storyA3 := createTestStory(t, db, storyRepo, userA.ID, "User A - Story 3")
-		time.Sleep(1 * time.Millisecond)
-		storyB1 := createTestStory(t, db, storyRepo, userB.ID, "User B - Story 1")
+		const numStoriesForUserA = 3
+		const numStoriesForUserB = 1
+		const limit = 10
+		const offset = 0
 
-		fetchedStoriesA, err := storyRepo.GetUserStories(userA.ID, 10, 0)
+		storiesA := make([]*model.Story, numStoriesForUserA)
+		for i := 0; i < numStoriesForUserA; i++ {
+			title := fmt.Sprintf("User A - story %d", i + 1)
+			storiesA[i] = createTestStory(t, db, storyRepo, userA.ID, title)
+			if i < numStoriesForUserA - 1 {
+				time.Sleep(1 * time.Millisecond)
+			}
+		}
+
+		storiesB := make([]*model.Story, numStoriesForUserB)
+		for i := 0; i < numStoriesForUserB; i++ {
+			title := fmt.Sprintf("User B - story %d", i + 1)
+			storiesB[i] = createTestStory(t, db, storyRepo, userB.ID, title)
+			if i < numStoriesForUserB - 1 {
+				time.Sleep(1 * time.Millisecond)
+			}
+		}
+
+		fetchedStoriesA, err := storyRepo.GetUserStories(userA.ID, limit, offset)
 		require.NoError(t, err, "failed to get user A stories")
-		require.Len(t, fetchedStoriesA, 3, "should return three stories for user A")
+		assert.Len(t, fetchedStoriesA, numStoriesForUserA, "should return three stories for user A")
 
 		for _, story := range fetchedStoriesA {
 			assert.Equal(t, userA.ID, story.UserID, "story UserID should match User A ID")
 		}
 
-		assert.Equal(t, storyA3.Title, fetchedStoriesA[0].Title, "most recent story should be first")
-		assert.Equal(t, storyA2.Title, fetchedStoriesA[1].Title, "second most recent story should be second")
-		assert.Equal(t, storyA1.Title, fetchedStoriesA[2].Title, "oldest story should be last")
+		for i, fetchedStory := range fetchedStoriesA {
+			expectedStory := storiesA[len(storiesA) - 1 - i]
+			assert.Equal(t, expectedStory.ID, fetchedStory.ID, "story IDs should match")
+			assert.Equal(t, expectedStory.UserID, fetchedStory.UserID, "story UserIDs should match")
+			assert.Equal(t, expectedStory.Title, fetchedStory.Title, "story titles should be in descending order by CreatedAt")
 
-		fetchedStoriesB, err := storyRepo.GetUserStories(userB.ID, 10, 0)
+		}
+
+		fetchedStoriesB, err := storyRepo.GetUserStories(userB.ID, limit, offset)
 		require.NoError(t, err, "failed to get user B stories")
-		require.Len(t, fetchedStoriesB, 1, "should return one story for user B")
-		assert.Equal(t, userB.ID, fetchedStoriesB[0].UserID, "story UserID should match User B ID")
-		assert.Equal(t, storyB1.Title, fetchedStoriesB[0].Title, "story title should match for user B")
+		assert.Len(t, fetchedStoriesB, numStoriesForUserB, "should return one story for user B")
+
+		for _, story := range fetchedStoriesB {
+			assert.Equal(t, userB.ID, story.UserID, "story UserID should match User B ID")
+		}
+
+		for i, fetchedStory := range fetchedStoriesB {
+			expectedStory := storiesB[len(storiesB) - 1 - i]
+			assert.Equal(t, expectedStory.ID, fetchedStory.ID, "story IDs should match")
+			assert.Equal(t, expectedStory.UserID, fetchedStory.UserID, "story UserIDs should match")
+			assert.Equal(t, expectedStory.Title, fetchedStory.Title, "story titles should be in descending order by CreatedAt")
+		}
 	})
 
 	t.Run("GetUserStory", func(t *testing.T) {
