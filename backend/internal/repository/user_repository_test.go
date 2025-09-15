@@ -60,7 +60,7 @@ func createTestUser(t *testing.T, db *sqlx.DB) *model.User {
 	return user
 }
 
-// ヘルパー：テスト用のストーリーを作成し、DBに保存する（テストの準備用）
+// ヘルパー：テスト用のストーリーを作成し、DBに保存する
 func createTestStory(t *testing.T, db *sqlx.DB, storyRepo IStoryRepository, userID int, title string) *model.Story {
 	story := &model.Story{
 		UserID:  userID,
@@ -105,61 +105,47 @@ func TestStoryRepository(t *testing.T) {
 	})
 
 	t.Run("GetUserStories", func(t *testing.T) {
-		userA := createTestUser(t, db)
-		userB := createTestUser(t, db)
-
-		const numStoriesForUserA = 3
-		const numStoriesForUserB = 1
+		storyCounts := []int{3, 4, 2, 1} // 各ユーザーのストーリ数
+		numUsers := len(storyCounts)
 		const limit = 10
 		const offset = 0
 
-		storiesA := make([]*model.Story, numStoriesForUserA)
-		for i := 0; i < numStoriesForUserA; i++ {
-			title := fmt.Sprintf("User A - story %d", i + 1)
-			storiesA[i] = createTestStory(t, db, storyRepo, userA.ID, title)
-			if i < numStoriesForUserA - 1 {
-				time.Sleep(1 * time.Millisecond)
+		users := make([]*model.User, numUsers)
+		allStories := make([][]*model.Story, numUsers) // 各ユーザーのストーリを格納するスライス
+
+		for i, numStories := range storyCounts {
+			users[i] = createTestUser(t, db)
+			allStories[i] = make([]*model.Story, numStories)
+
+			for j := 0; j < numStories; j++ {
+				title := fmt.Sprintf("User %d - Story %d", i+1, j+1)
+				allStories[i][j] = createTestStory(t, db, storyRepo, users[i].ID, title)
+				if j < numStories - 1 {
+					time.Sleep(1 * time.Millisecond)
+				}
 			}
 		}
 
-		storiesB := make([]*model.Story, numStoriesForUserB)
-		for i := 0; i < numStoriesForUserB; i++ {
-			title := fmt.Sprintf("User B - story %d", i + 1)
-			storiesB[i] = createTestStory(t, db, storyRepo, userB.ID, title)
-			if i < numStoriesForUserB - 1 {
-				time.Sleep(1 * time.Millisecond)
-			}
-		}
+		for i, user := range users {
+			t.Run(fmt.Sprintf("for User %d", i+1), func(t * testing.T) {
+				expectedStories := allStories[i]
+				expectedCount := storyCounts[i]
 
-		fetchedStoriesA, err := storyRepo.GetUserStories(userA.ID, limit, offset)
-		require.NoError(t, err, "failed to get user A stories")
-		assert.Len(t, fetchedStoriesA, numStoriesForUserA, "should return three stories for user A")
+				// ユーザーのストーリを取得
+				fetchedStories, err := storyRepo.GetUserStories(user.ID, limit, offset)
+				require.NoError(t, err, "failed to get User %d stories", i+1)
 
-		for _, story := range fetchedStoriesA {
-			assert.Equal(t, userA.ID, story.UserID, "story UserID should match User A ID")
-		}
+				// 件数、所有者、順序を検証
+				assert.Len(t, fetchedStories, expectedCount, "should return %d stories for User %d", expectedCount, i+1)
 
-		for i, fetchedStory := range fetchedStoriesA {
-			expectedStory := storiesA[len(storiesA) - 1 - i]
-			assert.Equal(t, expectedStory.ID, fetchedStory.ID, "story IDs should match")
-			assert.Equal(t, expectedStory.UserID, fetchedStory.UserID, "story UserIDs should match")
-			assert.Equal(t, expectedStory.Title, fetchedStory.Title, "story titles should be in descending order by CreatedAt")
-
-		}
-
-		fetchedStoriesB, err := storyRepo.GetUserStories(userB.ID, limit, offset)
-		require.NoError(t, err, "failed to get user B stories")
-		assert.Len(t, fetchedStoriesB, numStoriesForUserB, "should return one story for user B")
-
-		for _, story := range fetchedStoriesB {
-			assert.Equal(t, userB.ID, story.UserID, "story UserID should match User B ID")
-		}
-
-		for i, fetchedStory := range fetchedStoriesB {
-			expectedStory := storiesB[len(storiesB) - 1 - i]
-			assert.Equal(t, expectedStory.ID, fetchedStory.ID, "story IDs should match")
-			assert.Equal(t, expectedStory.UserID, fetchedStory.UserID, "story UserIDs should match")
-			assert.Equal(t, expectedStory.Title, fetchedStory.Title, "story titles should be in descending order by CreatedAt")
+				for j, fetchedStory := range fetchedStories {
+					assert.Equal(t, user.ID, fetchedStory.UserID, "story UserID should match User %d ID", i+1)
+					expectedStory := expectedStories[len(expectedStories) - 1 - j]
+					assert.Equal(t, expectedStory.ID, fetchedStory.ID, "story IDs should match")
+					assert.Equal(t, expectedStory.UserID, fetchedStory.UserID, "story UserIDs should match")
+					assert.Equal(t, expectedStory.Title, fetchedStory.Title, "story titles should be in descending order by CreatedAt")
+				}
+			})
 		}
 	})
 
