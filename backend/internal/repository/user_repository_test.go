@@ -60,6 +60,27 @@ func createTestUser(t *testing.T, db *sqlx.DB) *model.User {
 	return user
 }
 
+// ヘルパー：テスト用のストーリーを作成し、DBに保存する（テストの準備用）
+func createTestStory(t *testing.T, db *sqlx.DB, storyRepo IStoryRepository, userID int, title string) *model.Story {
+	story := &model.Story{
+		UserID:  userID,
+		Title:   title,
+		Content: fmt.Sprintf("Content for %s", title),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	err := storyRepo.CreateStory(story)
+	require.NoError(t, err, "failed to create test story for setup")
+
+	// このテストが終了したときに、作成したストーリーを削除するように予約する
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM stories WHERE id = $1", story.ID)
+		require.NoError(t, err, "failed to delete test story after test")
+	})
+
+	return story
+}
+
 func TestStoryRepository(t *testing.T) {
 	db := setupTestDB(t)
 	defer db.Close()
@@ -68,9 +89,8 @@ func TestStoryRepository(t *testing.T) {
 	// userRepo := NewUserRepository(db)
 
 	t.Run("CreateStory", func(t *testing.T) {
-		testUser := createTestUser(t, db)
-		// storyToCreate := createTestStory(t, db, testUser.ID)
-		storyToCreate := newTestStory(testUser.ID)
+		user := createTestUser(t, db)
+		storyToCreate := newTestStory(user.ID)
 
 		err := storyRepo.CreateStory(storyToCreate)
 
@@ -81,44 +101,69 @@ func TestStoryRepository(t *testing.T) {
 		err = db.Get(&fetchedStory, "SELECT * FROM stories WHERE id = $1", storyToCreate.ID)
 
 		require.NoError(t, err, "failed to fetch created story from DB")
-		assert.Equal(t, testUser.ID, fetchedStory.UserID, "story UserID should match test user ID")
+		assert.Equal(t, user.ID, fetchedStory.UserID, "story UserID should match test user ID")
 	})
 
-	t.Run("GetStories", func(t *testing.T) {
-		testUser := createTestUser(t, db)
-		// storiesToGet := createTestStory(t, db, testUser.ID)
-		storiesToGet := newTestStory(testUser.ID)
-		err := storyRepo.CreateStory(storiesToGet)
-		require.NoError(t, err, "failed to create story for GetStories test")
+	t.Run("GetUserStories", func(t *testing.T) {
+		// user := createTestUser(t, db)
+		// storiesToGet := newTestStory(user.ID)
+		// err := storyRepo.CreateStory(storiesToGet)
+		// require.NoError(t, err, "failed to create story for GetStories test")
 
-		fetchedStories, err := storyRepo.GetUserStories(testUser.ID, 10, 0)
+		// fetchedStories, err := storyRepo.GetUserStories(user.ID, 10, 0)
 
-		require.NoError(t, err, "failed to get user stories")
-		require.Len(t, fetchedStories, 1, "should return one story")
-		assert.Equal(t, storiesToGet.Title, fetchedStories[0].Title, "story title should match")
+		// require.NoError(t, err, "failed to get user stories")
+		// require.Len(t, fetchedStories, 1, "should return one story")
+		// assert.Equal(t, storiesToGet.Title, fetchedStories[0].Title, "story title should match")
 
+		userA := createTestUser(t, db)
+		userB := createTestUser(t, db)
+
+		storyA1 := createTestStory(t, db, storyRepo, userA.ID, "User A - Story 1")
+		time.Sleep(1 * time.Millisecond)
+		storyA2 := createTestStory(t, db, storyRepo, userA.ID, "User A - Story 2")
+		time.Sleep(1 * time.Millisecond)
+		storyA3 := createTestStory(t, db, storyRepo, userA.ID, "User A - Story 3")
+		time.Sleep(1 * time.Millisecond)
+		storyB1 := createTestStory(t, db, storyRepo, userB.ID, "User B - Story 1")
+
+		fetchedStoriesA, err := storyRepo.GetUserStories(userA.ID, 10, 0)
+		require.NoError(t, err, "failed to get user A stories")
+		require.Len(t, fetchedStoriesA, 3, "should return three stories for user A")
+
+		for _, story := range fetchedStoriesA {
+			assert.Equal(t, userA.ID, story.UserID, "story UserID should match User A ID")
+		}
+
+		assert.Equal(t, storyA3.Title, fetchedStoriesA[0].Title, "most recent story should be first")
+		assert.Equal(t, storyA2.Title, fetchedStoriesA[1].Title, "second most recent story should be second")
+		assert.Equal(t, storyA1.Title, fetchedStoriesA[2].Title, "oldest story should be last")
+
+		fetchedStoriesB, err := storyRepo.GetUserStories(userB.ID, 10, 0)
+		require.NoError(t, err, "failed to get user B stories")
+		require.Len(t, fetchedStoriesB, 1, "should return one story for user B")
+		assert.Equal(t, userB.ID, fetchedStoriesB[0].UserID, "story UserID should match User B ID")
+		assert.Equal(t, storyB1.Title, fetchedStoriesB[0].Title, "story title should match for user B")
 	})
 
-	t.Run("GetStory", func(t *testing.T) {
-		testUser := createTestUser(t, db)
-		// storyToGet := createTestStory(t, db, testUser.ID)
-		storyToGet := newTestStory(testUser.ID)
+	t.Run("GetUserStory", func(t *testing.T) {
+		user := createTestUser(t, db)
+		storyToGet := newTestStory(user.ID)
 		err := storyRepo.CreateStory(storyToGet)
 		require.NoError(t, err, "failed to create story for GetStory test")
 
-		fetchedStory, err := storyRepo.GetUserStory(storyToGet.ID, testUser.ID)
+		fetchedStory, err := storyRepo.GetUserStory(storyToGet.ID, user.ID)
 		require.NoError(t, err, "failed to get user story")
 		require.NotNil(t, fetchedStory, "story should not be nil")
 		assert.Equal(t, storyToGet.ID, fetchedStory.ID, "story ID should match")
 		assert.Equal(t, storyToGet.UserID, fetchedStory.UserID, "story UserID should match")
 		assert.Equal(t, storyToGet.Content, fetchedStory.Content, "story content should match")
-		assert.Equal(t, testUser.ID, fetchedStory.UserID, "story UserID should match test user ID")
+		assert.Equal(t, user.ID, fetchedStory.UserID, "story UserID should match test user ID")
 	})
 
 	t.Run("DeleteStory", func(t *testing.T) {
-		testUser := createTestUser(t, db)
-		// storyToDelete := createTestStory(t, db, testUser.ID)
-		storyToDelete := newTestStory(testUser.ID)
+		user := createTestUser(t, db)
+		storyToDelete := newTestStory(user.ID)
 		err := storyRepo.CreateStory(storyToDelete)
 		require.NoError(t, err, "failed to create story for DeleteStory test")
 		
@@ -126,7 +171,7 @@ func TestStoryRepository(t *testing.T) {
 		require.NoError(t, err, "failed to delete story")
 
 		// 削除されたことを確認
-		deletedStory, err := storyRepo.GetUserStory(storyToDelete.ID, testUser.ID)
+		deletedStory, err := storyRepo.GetUserStory(storyToDelete.ID, user.ID)
 		assert.Error(t, err, "should return error for deleted story")
 		assert.Nil(t, deletedStory, "should return nil for a deleted story")
 	})
