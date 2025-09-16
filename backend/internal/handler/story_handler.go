@@ -74,7 +74,29 @@ func (h *StoryHandler) GenerateStory(e echo.Context) error {
 }
 
 func (h *StoryHandler) GetStories(e echo.Context) error {
-	return nil
+	// TODO: JWTミドルウェアからユーザーIDを取得する
+	userID := 123
+
+	limitStr := e.QueryParam("limit")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
+
+	offsetStr := e.QueryParam("offset")
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+
+	stories, err := h.StoryRepo.GetUserStories(userID, limit, offset)
+	if err != nil {
+		return e.JSON(http.StatusInternalServerError, map[string]string{"error": "database error"})
+	}
+
+	return e.JSON(http.StatusOK, stories)
+
+	// return nil
 }
 
 func (h *StoryHandler) GetStory(e echo.Context) error {
@@ -101,5 +123,23 @@ func (h *StoryHandler) GetStory(e echo.Context) error {
 }
 
 func (h *StoryHandler) DeleteStory(e echo.Context) error {
-	return nil
+	idStr := e.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return e.JSON(http.StatusBadRequest, map[string]string{"error": "invalid story id"})
+	}
+
+	// TODO: JWTミドルウェアからユーザーIDを取得する
+	
+	// TODO: 削除する story が本当にこのユーザーのものかを確認する。
+	// story, err := h.StoryRepo.GetUserStory(id, userID)
+	// if err != nil {...}
+
+	if err := h.StoryRepo.DeleteStory(id); err != nil {
+		return e.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to delete story"})
+	}
+
+	return e.JSON(http.StatusNoContent, nil)
+
+	// return nil
 }
