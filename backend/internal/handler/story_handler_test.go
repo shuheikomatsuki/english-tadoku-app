@@ -2,8 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -59,12 +61,31 @@ func (m *MockLLMService) GenerateStory(prompt string) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
-// テストケースを記述
-func TestStoryHandler_GetStory(t *testing.T) {
-	t.Run("success(return a story)", func(t *testing.T) {
-		mockRepo := new(MockStoryRepository)
-		mockLLM := new(MockLLMService)
+const (
+	testUserID = 123
+	testStoryID = 1
+)
 
+// テスト用のストーリーオブジェクトを生成するヘルパー関数
+func newTestStory(id, userID int) *model.Story {
+	return &model.Story{
+		ID: id,
+		UserID: userID,
+		Title: fmt.Sprintf("Story %d", id),
+		Content: fmt.Sprintf("This is the content for story %d", id),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+}
+
+// --- テストケース ---
+func TestStoryHandler_GetStory(t *testing.T) {
+	mockRepo := new(MockStoryRepository)
+	mockLLM := new(MockLLMService)
+	h := NewStoryHandler(mockRepo, mockLLM)
+	e := echo.New()
+
+	t.Run("success: should return a story", func(t *testing.T) {
 		expectedStory := &model.Story{
 			ID: 1,
 			UserID: 123,
@@ -74,21 +95,18 @@ func TestStoryHandler_GetStory(t *testing.T) {
 			UpdatedAt: time.Now(),
 		}
 
-		mockRepo.On("GetUserStory", 1, 123).Return(expectedStory, nil)
+		mockRepo.On("GetUserStory", 1, 123).Return(expectedStory, nil).Once()
 
-		e := echo.New()
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetPath("/stories/:id")
 		c.SetParamNames("id")
-		c.SetParamValues("1")
+		c.SetParamValues(strconv.Itoa(testStoryID))
 
 		// TODO: JWTミドルウェア認証を実装したら、テスト用のユーザー情報を Context にセットする
 		// claims := &tokenClaims{UserID: 123}
 		// c.Set("user", jwt.NewWithClaims(jwt.SigningMethodHS256, claims))
-
-		h := NewStoryHandler(mockRepo, mockLLM)
 
 		err := h.GetStory(c)
 
@@ -104,25 +122,21 @@ func TestStoryHandler_GetStory(t *testing.T) {
 		mockRepo.AssertExpectations(t)
 	})
 
-	t.Run("404 Not Found", func(t *testing.T) {
-		mockRepo := new(MockStoryRepository)
-		mockLLM := new(MockLLMService)
+	t.Run("fail: should return 404 Not Found for non-existent story", func(t *testing.T) {
+		nonExistingStoryID := 99
 
-		mockRepo.On("GetUserStory", 99, 123).Return(nil, http.ErrMissingFile)
+		mockRepo.On("GetUserStory", nonExistingStoryID, testUserID).Return(nil, http.ErrMissingFile).Once()
 
-		e := echo.New()
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetPath("/stories/:id")
 		c.SetParamNames("id")
-		c.SetParamValues("99")
+		c.SetParamValues(strconv.Itoa(nonExistingStoryID))
 
 		// TODO: JWTミドルウェア認証を実装したら、テスト用のユーザー情報を Context にセットする
 		// claims := &tokenClaims{UserID: 123}
 		// c.Set("user", jwt.NewWithClaims(jwt.SigningMethodHS256, claims))
-
-		h := NewStoryHandler(mockRepo, mockLLM)
 
 		err := h.GetStory(c)
 
@@ -133,27 +147,28 @@ func TestStoryHandler_GetStory(t *testing.T) {
 }
 
 func TestStoryHandler_GetStories(t *testing.T) {
-	t.Run("success(return a list of story)", func(t *testing.T) {
-		mockRepo := new(MockStoryRepository)
-		mockLLM := new(MockLLMService)
+	mockRepo := new(MockStoryRepository)
+	mockLLM := new(MockLLMService)
+	h := NewStoryHandler(mockRepo, mockLLM)
+	e := echo.New()
 
+	t.Run("success: should return a list of story", func(t *testing.T) {
 		expectedStories := []*model.Story{
-			{ID: 1, UserID: 123, Title: "Story 1"},
-			{ID: 2, UserID: 123, Title: "Story 2"},
+			newTestStory(1, testUserID),
+			newTestStory(2, testUserID),
 		}
 
+		limit, offset := 10, 0
 		// TODO: limit, offsetをクエリパラメータから取得するようになったら、それらも引数に含める
-		mockRepo.On("GetUserStories", 123, 10, 0).Return(expectedStories, nil)
+		mockRepo.On("GetUserStories", testUserID, limit, offset).Return(expectedStories, nil).Once()
 
-		e := echo.New()
-		req := httptest.NewRequest(http.MethodGet, "/stories?limit=10&offset=0", nil)
+		reqURL := fmt.Sprintf("/stories?limit=%d&offset=%d", limit, offset)
+		req := httptest.NewRequest(http.MethodGet, reqURL, nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
 		// TODO: JWTミドルウェアを実装したら、ユーザー情報を Context にセットする。
 		// c.Set("user", ...)
-		
-		h := NewStoryHandler(mockRepo, mockLLM)
 
 		err := h.GetStories(c)
 
@@ -163,24 +178,27 @@ func TestStoryHandler_GetStories(t *testing.T) {
 		var receivedStories []model.Story
 		err = json.Unmarshal(rec.Body.Bytes(), &receivedStories)
 		require.NoError(t, err)
-		assert.Len(t, receivedStories, 2)
-		assert.Equal(t, "Story 1", receivedStories[0].Title)
+		assert.Len(t, receivedStories, len(expectedStories))
+		assert.Equal(t, expectedStories[0].Title, receivedStories[0].Title)
 
 		mockRepo.AssertExpectations(t)
 	})
 }
 
 func TestStoryHandler_GenerateStory(t *testing.T) {
-	t.Run("success(generate and save a story)", func(t *testing.T) {
-		mockRepo := new(MockStoryRepository)
-		mockLLM := new(MockLLMService)
+	mockRepo := new(MockStoryRepository)
+	mockLLM := new(MockLLMService)
+	h := NewStoryHandler(mockRepo, mockLLM)
+	e := echo.New()
+
+	t.Run("success: should generate and save a story", func(t *testing.T) {
+		prompt := "A story abount Go"
+		generatedContent := "Go is a statically typed, compiled programming language..."
+		requestBody := fmt.Sprintf(`{"prompt": "%s"}`, prompt)
 	
-		requestBody := `{"prompt": "What is Golang?"}`
+		mockLLM.On("GenerateStory", prompt).Return(generatedContent, nil).Once()
+		mockRepo.On("CreateStory", mock.AnythingOfType("*model.Story")).Return(nil).Once()
 	
-		mockLLM.On("GenerateStory", "What is Golang?").Return("Golang is an open-source programming language developed by Google.", nil)
-		mockRepo.On("CreateStory", mock.AnythingOfType("*model.Story")).Return(nil)
-	
-		e := echo.New()
 		req := httptest.NewRequest(http.MethodPost, "/stories", strings.NewReader(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
@@ -188,44 +206,40 @@ func TestStoryHandler_GenerateStory(t *testing.T) {
 	
 		// TODO: User Context をセットする
 	
-		h := NewStoryHandler(mockRepo, mockLLM)
-	
 		err := h.GenerateStory(c)
 	
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusCreated, rec.Code)
 	
-		var responseBody map[string]interface{}
-		err = json.Unmarshal(rec.Body.Bytes(), &responseBody)
-		require.NoError(t, err)
-		assert.Contains(t, responseBody["content"], "Golang is")
-	
+		var responseBody model.Story
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &responseBody))
+		assert.Equal(t, prompt, responseBody.Title)
+		assert.Equal(t, generatedContent, responseBody.Content)
 		mockRepo.AssertExpectations(t)
 		mockLLM.AssertExpectations(t)
 	})
 }
 
 func TestStoryHandler_DeleteStory(t *testing.T) {
-	t.Run("success(delete a story)", func(t *testing.T) {
-		mockRepo := new(MockStoryRepository)
-		mockLLM := new(MockLLMService)
+	mockRepo := new(MockStoryRepository)
+	mockLLM := new(MockLLMService)
+	h := NewStoryHandler(mockRepo, mockLLM)
+	e := echo.New()
 
-		mockRepo.On("DeleteStory", 1).Return(nil)
+	t.Run("success: should delete a story", func(t *testing.T) {
+		mockRepo.On("DeleteStory", testStoryID).Return(nil).Once()
 		// TODO: 削除権限チェックが必要のため、先に story を取得する必要があるかも
-		// mockRepo.On("GetUserStory", 1, 123).Return(&model.Story{ID: 1, UserID: 123}, nil)
+		// mockRepo.On("GetUserStory", 1, 123).Return(&model.Story{ID: 1, UserID: 123}, nil).Once()
 
-		e := echo.New()
 		req := httptest.NewRequest(http.MethodDelete, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetPath("/stories/:id")
 		c.SetParamNames("id")
-		c.SetParamValues("1")
+		c.SetParamValues(strconv.Itoa(testStoryID))
 
 		// TODO: JWTミドルウェアからユーザー情報を Context にセットする
 		// c.Set("user", ...)
-
-		h := NewStoryHandler(mockRepo, mockLLM)
 
 		err := h.DeleteStory(c)
 
@@ -235,21 +249,15 @@ func TestStoryHandler_DeleteStory(t *testing.T) {
 		mockRepo.AssertExpectations(t)
 	})
 
-	t.Run("400 Bad Request for invalid id", func(t *testing.T) {
-		mockRepo := new(MockStoryRepository)
-		mockLLM := new(MockLLMService)
-
+	t.Run("fail: should return 400 Bad Request for invalid id", func(t *testing.T) {
 		// mockRepo.ON(...)を書かないのは、モックのメソッドが呼ばれないから。
 
-		e := echo.New()
 		req := httptest.NewRequest(http.MethodDelete, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 		c.SetPath("/stories/:id")
 		c.SetParamNames("id")
 		c.SetParamValues("invalid_id")
-
-		h := NewStoryHandler(mockRepo, mockLLM)
 
 		err := h.DeleteStory(c)
 
