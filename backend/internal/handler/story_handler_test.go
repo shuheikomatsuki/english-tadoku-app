@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	// "github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -85,37 +85,29 @@ func TestStoryHandler_GetStory(t *testing.T) {
 	h := NewStoryHandler(mockRepo, mockLLM)
 	e := echo.New()
 
-	t.Run("success: should return a story", func(t *testing.T) {
-		expectedStory := &model.Story{
-			ID: 1,
-			UserID: 123,
-			Title: "Test Story",
-			Content: "This is a test.",
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		}
+	claims := &JwtCustomClaims{
+		testUserID,
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1))},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-		mockRepo.On("GetUserStory", 1, 123).Return(expectedStory, nil).Once()
+	t.Run("success: should return a story", func(t *testing.T) {
+		expectedStory := newTestStory(testStoryID, testUserID)
+		mockRepo.On("GetUserStory", testStoryID, testUserID).Return(expectedStory, nil).Once()
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
+		c.Set("user", token)
 		c.SetPath("/stories/:id")
 		c.SetParamNames("id")
 		c.SetParamValues(strconv.Itoa(testStoryID))
 
-		// TODO: JWTミドルウェア認証を実装したら、テスト用のユーザー情報を Context にセットする
-		// claims := &tokenClaims{UserID: 123}
-		// c.Set("user", jwt.NewWithClaims(jwt.SigningMethodHS256, claims))
-
-		err := h.GetStory(c)
-
-		require.NoError(t, err)
+		require.NoError(t, h.GetStory(c))
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var receivedStory model.Story
-		err = json.Unmarshal(rec.Body.Bytes(), &receivedStory)
-		require.NoError(t, err)
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &receivedStory))
 		assert.Equal(t, expectedStory.Title, receivedStory.Title)
 		assert.Equal(t, expectedStory.Content, receivedStory.Content)
 
@@ -124,23 +116,17 @@ func TestStoryHandler_GetStory(t *testing.T) {
 
 	t.Run("fail: should return 404 Not Found for non-existent story", func(t *testing.T) {
 		nonExistingStoryID := 99
-
 		mockRepo.On("GetUserStory", nonExistingStoryID, testUserID).Return(nil, http.ErrMissingFile).Once()
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
+		c.Set("user", token)
 		c.SetPath("/stories/:id")
 		c.SetParamNames("id")
 		c.SetParamValues(strconv.Itoa(nonExistingStoryID))
 
-		// TODO: JWTミドルウェア認証を実装したら、テスト用のユーザー情報を Context にセットする
-		// claims := &tokenClaims{UserID: 123}
-		// c.Set("user", jwt.NewWithClaims(jwt.SigningMethodHS256, claims))
-
-		err := h.GetStory(c)
-
-		require.NoError(t, err)
+		require.NoError(t, h.GetStory(c))
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 		mockRepo.AssertExpectations(t)
 	})
@@ -152,6 +138,12 @@ func TestStoryHandler_GetStories(t *testing.T) {
 	h := NewStoryHandler(mockRepo, mockLLM)
 	e := echo.New()
 
+	claims := &JwtCustomClaims{
+		testUserID,
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1))},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
 	t.Run("success: should return a list of story", func(t *testing.T) {
 		expectedStories := []*model.Story{
 			newTestStory(1, testUserID),
@@ -159,25 +151,19 @@ func TestStoryHandler_GetStories(t *testing.T) {
 		}
 
 		limit, offset := 10, 0
-		// TODO: limit, offsetをクエリパラメータから取得するようになったら、それらも引数に含める
 		mockRepo.On("GetUserStories", testUserID, limit, offset).Return(expectedStories, nil).Once()
 
 		reqURL := fmt.Sprintf("/stories?limit=%d&offset=%d", limit, offset)
 		req := httptest.NewRequest(http.MethodGet, reqURL, nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
+		c.Set("user", token)
 
-		// TODO: JWTミドルウェアを実装したら、ユーザー情報を Context にセットする。
-		// c.Set("user", ...)
-
-		err := h.GetStories(c)
-
-		require.NoError(t, err)
+		require.NoError(t, h.GetStories(c))
 		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var receivedStories []model.Story
-		err = json.Unmarshal(rec.Body.Bytes(), &receivedStories)
-		require.NoError(t, err)
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &receivedStories))
 		assert.Len(t, receivedStories, len(expectedStories))
 		assert.Equal(t, expectedStories[0].Title, receivedStories[0].Title)
 
@@ -191,6 +177,12 @@ func TestStoryHandler_GenerateStory(t *testing.T) {
 	h := NewStoryHandler(mockRepo, mockLLM)
 	e := echo.New()
 
+	claims := &JwtCustomClaims{
+		testUserID,
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1))},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
 	t.Run("success: should generate and save a story", func(t *testing.T) {
 		prompt := "A story abount Go"
 		generatedContent := "Go is a statically typed, compiled programming language..."
@@ -203,12 +195,9 @@ func TestStoryHandler_GenerateStory(t *testing.T) {
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-	
-		// TODO: User Context をセットする
-	
-		err := h.GenerateStory(c)
-	
-		require.NoError(t, err)
+		c.Set("user", token)
+
+		require.NoError(t, h.GenerateStory(c))
 		assert.Equal(t, http.StatusCreated, rec.Code)
 	
 		var responseBody model.Story
@@ -226,26 +215,26 @@ func TestStoryHandler_DeleteStory(t *testing.T) {
 	h := NewStoryHandler(mockRepo, mockLLM)
 	e := echo.New()
 
+	claims := &JwtCustomClaims{
+		testUserID,
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1))},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
 	t.Run("success: should delete a story", func(t *testing.T) {
+		mockRepo.On("GetUserStory", testStoryID, testUserID).Return(&model.Story{ID: testStoryID, UserID: testUserID}, nil).Once()
 		mockRepo.On("DeleteStory", testStoryID).Return(nil).Once()
-		// TODO: 削除権限チェックが必要のため、先に story を取得する必要があるかも
-		// mockRepo.On("GetUserStory", 1, 123).Return(&model.Story{ID: 1, UserID: 123}, nil).Once()
 
 		req := httptest.NewRequest(http.MethodDelete, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
+		c.Set("user", token)
 		c.SetPath("/stories/:id")
 		c.SetParamNames("id")
 		c.SetParamValues(strconv.Itoa(testStoryID))
 
-		// TODO: JWTミドルウェアからユーザー情報を Context にセットする
-		// c.Set("user", ...)
-
-		err := h.DeleteStory(c)
-
-		require.NoError(t, err)
+		require.NoError(t, h.DeleteStory(c))
 		assert.Equal(t, http.StatusNoContent, rec.Code)
-
 		mockRepo.AssertExpectations(t)
 	})
 
@@ -255,6 +244,7 @@ func TestStoryHandler_DeleteStory(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
+		c.Set("user", token)
 		c.SetPath("/stories/:id")
 		c.SetParamNames("id")
 		c.SetParamValues("invalid_id")

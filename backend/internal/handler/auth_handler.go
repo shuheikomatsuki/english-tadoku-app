@@ -38,7 +38,7 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-type jwtCustomClaims struct {
+type JwtCustomClaims struct {
 	UserID int `json:"user_id"`
 	jwt.RegisteredClaims
 }
@@ -65,8 +65,6 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, "user created successfully")
-
-	// return nil
 }
 
 func (h *AuthHandler) Login(c echo.Context) error {
@@ -85,7 +83,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, "invalid email or password")
 	}
 
-	claims := &jwtCustomClaims{
+	claims := &JwtCustomClaims{
 		user.ID, 
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
@@ -102,6 +100,4 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"token": t,
 	})
-
-	// return nil
 }

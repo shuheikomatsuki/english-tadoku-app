@@ -40,27 +40,19 @@ func getUserIDFromContext(c echo.Context) (int, error) {
 		return 0, fmt.Errorf("failed to get user from context")
 	}
 
-	claims, ok := user.Claims.(jwt.MapClaims)
+	claims, ok := user.Claims.(*JwtCustomClaims)
 	if !ok {
 		return 0, fmt.Errorf("failed to get claims from token")
 	}
 
-	userIDFloat, ok := claims["user_id"].(float64)
-	if !ok {
-		return 0, fmt.Errorf("user_id not found in claims or is not a number")
-	}
-
-	return int(userIDFloat), nil
-
+	return claims.UserID, nil
 }
 
 func (h *StoryHandler) GenerateStory(c echo.Context) error {
-	// TODO: JWTミドルウェアからユーザーIDを取得する
 	userID, err := getUserIDFromContext(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, "invalid token")
 	}
-	// userID := 123
 
 	var req struct {
 		Prompt string `json:"prompt"`
@@ -87,17 +79,13 @@ func (h *StoryHandler) GenerateStory(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, story)
-
-	// return nil
 }
 
 func (h *StoryHandler) GetStories(c echo.Context) error {
-	// TODO: JWTミドルウェアからユーザーIDを取得する
 	userID, err := getUserIDFromContext(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, "invalid token")
 	}
-	// userID := 123
 
 	limitStr := c.QueryParam("limit")
 	limit, err := strconv.Atoi(limitStr)
@@ -117,8 +105,6 @@ func (h *StoryHandler) GetStories(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, stories)
-
-	// return nil
 }
 
 func (h *StoryHandler) GetStory(c echo.Context) error {
@@ -128,12 +114,10 @@ func (h *StoryHandler) GetStory(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid story id"})
 	}
 
-	// TODO: JWTミドルウェアからユーザーIDを取得する
 	userID, err := getUserIDFromContext(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, "invalid token")
 	}
-	// userID := 123 // テスト用の仮ID
 
 	story, err := h.StoryRepo.GetUserStory(id, userID)
 	if err != nil {
@@ -144,8 +128,6 @@ func (h *StoryHandler) GetStory(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, story)
-
-	// return nil
 }
 
 func (h *StoryHandler) DeleteStory(c echo.Context) error {
@@ -155,13 +137,11 @@ func (h *StoryHandler) DeleteStory(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid story id"})
 	}
 
-	// TODO: JWTミドルウェアからユーザーIDを取得する
 	userID, err := getUserIDFromContext(c)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, "invalid token")
 	}
 	
-	// TODO: 削除する story が本当にこのユーザーのものかを確認する。
 	story, err := h.StoryRepo.GetUserStory(id, userID)
 	if err != nil {
 		if err == sql.ErrNoRows || err == http.ErrMissingFile {
@@ -178,6 +158,4 @@ func (h *StoryHandler) DeleteStory(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusNoContent, nil)
-
-	// return nil
 }
