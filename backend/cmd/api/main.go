@@ -5,6 +5,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	
+	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/middleware"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/handler"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/service"
@@ -34,13 +36,13 @@ func main() {
 	api.POST("/signup", authHandler.SignUp)
 	api.POST("/login", authHandler.Login)
 	
-
 	// 認証が必要なグループ
 	stories := api.Group("/stories")
-	// TODO: JWT ミドルウェアを追加する処理
+	stories.Use(middleware.JWTAuthMiddleware) // TODO: JWT ミドルウェアを追加する処理
 	stories.POST("", storyHandler.GenerateStory)
 	stories.GET("", storyHandler.GetStories)
 	stories.GET("/:id", storyHandler.GetStory)
+	stories.DELETE("/:id", storyHandler.DeleteStory)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
