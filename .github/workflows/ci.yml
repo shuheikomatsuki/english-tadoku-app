@@ -1,0 +1,58 @@
+name: Go Backend CI
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      TEST_DATABASE_URL: "postgres://postgres:password@localhost:5432/english_tadoku_app_ci_test?sslmode=disable"
+      
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: english_tadoku_app_ci_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d english_tadoku_app_ci_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache-dependency-path: backend/go.sum
+
+      - name: Run database migrations
+        run: |
+          docker run --network=host \
+            -v ${{ github.workspace }}/backend/db/migrations:/migrations \
+            migrate/migrate \
+            -path /migrations \
+            -database "${{ env.TEST_DATABASE_URL }}" up
+
+      - name: Run tests
+        working-directory: ./backend
+        run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          working-directory: ./backend
+          file: ./coverage.out

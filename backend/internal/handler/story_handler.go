@@ -1,17 +1,13 @@
-// userRepo := repository.NewUserRepository(db)
-// storyRepo := repository.NewStoryRepository(db)
-// llmService := service.NewLLMService(os.Getenv("GEMINI_API_KEY"))
-// authHandler := handler.NewAuthHandler(userRepo)
-// こんな感じでmain.goで使う想定
-
 package handler
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/model"
@@ -38,22 +34,36 @@ func NewStoryHandler(storyRepo repository.IStoryRepository, llmService service.I
 	}
 }
 
-func (h *StoryHandler) GenerateStory(e echo.Context) error {
-	// TODO: JWTミドルウェアからユーザーIDを取得する
-	// claims := e.Get("user").(*jwt.Token).Claims.(*tokenClaims)
-	// userID := claims.UserID
-	userID := 123
+func getUserIDFromContext(c echo.Context) (int, error) {
+	user, ok := c.Get("user").(*jwt.Token)
+	if !ok {
+		return 0, fmt.Errorf("failed to get user from context")
+	}
+
+	claims, ok := user.Claims.(*JwtCustomClaims)
+	if !ok {
+		return 0, fmt.Errorf("failed to get claims from token")
+	}
+
+	return claims.UserID, nil
+}
+
+func (h *StoryHandler) GenerateStory(c echo.Context) error {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, "invalid token")
+	}
 
 	var req struct {
 		Prompt string `json:"prompt"`
 	}
-	if err := e.Bind(&req); err != nil {
-		return e.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 	}
 
 	content, err := h.LLMService.GenerateStory(req.Prompt)
 	if err != nil {
-		return e.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate story content"})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate story content"})
 	}
 
 	story := &model.Story{
@@ -65,25 +75,25 @@ func (h *StoryHandler) GenerateStory(e echo.Context) error {
 	}
 
 	if err := h.StoryRepo.CreateStory(story); err != nil {
-		return e.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to save story"})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to save story"})
 	}
 
-	return e.JSON(http.StatusCreated, story)
-
-	// return nil
+	return c.JSON(http.StatusCreated, story)
 }
 
-func (h *StoryHandler) GetStories(e echo.Context) error {
-	// TODO: JWTミドルウェアからユーザーIDを取得する
-	userID := 123
+func (h *StoryHandler) GetStories(c echo.Context) error {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, "invalid token")
+	}
 
-	limitStr := e.QueryParam("limit")
+	limitStr := c.QueryParam("limit")
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit <= 0 {
 		limit = 10
 	}
 
-	offsetStr := e.QueryParam("offset")
+	offsetStr := c.QueryParam("offset")
 	offset, err := strconv.Atoi(offsetStr)
 	if err != nil || offset < 0 {
 		offset = 0
@@ -91,55 +101,61 @@ func (h *StoryHandler) GetStories(e echo.Context) error {
 
 	stories, err := h.StoryRepo.GetUserStories(userID, limit, offset)
 	if err != nil {
-		return e.JSON(http.StatusInternalServerError, map[string]string{"error": "database error"})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "database error"})
 	}
 
-	return e.JSON(http.StatusOK, stories)
-
-	// return nil
+	return c.JSON(http.StatusOK, stories)
 }
 
-func (h *StoryHandler) GetStory(e echo.Context) error {
-	idStr := e.Param("id")
+func (h *StoryHandler) GetStory(c echo.Context) error {
+	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		return e.JSON(http.StatusBadRequest, map[string]string{"error": "invalid story id"})
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid story id"})
 	}
 
-	// TODO: JWTミドルウェアからユーザーIDを取得する
-	userID := 123 // テスト用の仮ID
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, "invalid token")
+	}
 
 	story, err := h.StoryRepo.GetUserStory(id, userID)
 	if err != nil {
 		if err == sql.ErrNoRows || err == http.ErrMissingFile {
-			return e.JSON(http.StatusNotFound, map[string]string{"error": "story not found"})
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "story not found"})
 		}
-		return e.JSON(http.StatusInternalServerError, map[string]string{"error": "database error"})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "database error"})
 	}
 
-	return e.JSON(http.StatusOK, story)
-
-	// return nil
+	return c.JSON(http.StatusOK, story)
 }
 
-func (h *StoryHandler) DeleteStory(e echo.Context) error {
-	idStr := e.Param("id")
+func (h *StoryHandler) DeleteStory(c echo.Context) error {
+	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		return e.JSON(http.StatusBadRequest, map[string]string{"error": "invalid story id"})
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid story id"})
 	}
 
-	// TODO: JWTミドルウェアからユーザーIDを取得する
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, "invalid token")
+	}
 	
-	// TODO: 削除する story が本当にこのユーザーのものかを確認する。
-	// story, err := h.StoryRepo.GetUserStory(id, userID)
-	// if err != nil {...}
+	story, err := h.StoryRepo.GetUserStory(id, userID)
+	if err != nil {
+		if err == sql.ErrNoRows || err == http.ErrMissingFile {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "story not found"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "database error"})
+	}
+	if story.UserID != userID {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "you do not have permission to delete this story"})
+	}
 
 	if err := h.StoryRepo.DeleteStory(id); err != nil {
-		return e.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to delete story"})
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to delete story"})
 	}
 
-	return e.JSON(http.StatusNoContent, nil)
-
-	// return nil
+	return c.JSON(http.StatusNoContent, nil)
 }
