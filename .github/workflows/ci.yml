@@ -11,23 +11,19 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DB_USER: postgres
-      DB_PASSWORD: password
-      DB_NAME: english_tadoku_app_ci_test
-      DB_HOST: localhost
       TEST_DATABASE_URL: "postgres://postgres:password@localhost:5432/english_tadoku_app_ci_test?sslmode=disable"
       
     services:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: ${{ env.DB_USER }}
-          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
-          POSTGRES_DB: ${{ env.DB_NAME }}
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: english_tadoku_app_ci_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U ${{ env.DB_USER }} -d ${{ env.DB_NAME }}"
+          --health-cmd "pg_isready -U postgres -d english_tadoku_app_ci_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries-start 5
@@ -54,8 +50,6 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # 事前にGitHub Secretsに設定が必要
+          token: ${{ secrets.CODECOV_TOKEN }}
           working-directory: ./backend
-          file: ./coverage.out # カバレッジファイルの場所を明示
-          flags: unittests # テストの種類にフラグを立てる
-          name: codecov-umbrella # アップロード名を定義
+          file: ./coverage.out
