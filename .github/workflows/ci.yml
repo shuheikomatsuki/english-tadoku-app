@@ -39,8 +39,10 @@ jobs:
 
       - name: Run database migrations
         run: |
-          docker run --network=host migrate/migrate \
-            -path ./backend/db/migrations \
+          docker run --network=host \
+            -v ${{ github.workspace }}/backend/db/migrations:/migrations \
+            migrate/migrate \
+            -path /migrations \
             -database "${{ env.TEST_DATABASE_URL }}" up
 
       - name: Run tests
