@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -11,7 +12,11 @@ import (
 )
 
 func setupTestDB(t *testing.T) *sqlx.DB {
-	dsn := "host=localhost port=5432 user=postgres password=password dbname=tadoku_db sslmode=disable"
+	// dsn := "host=localhost port=5432 user=postgres password=password dbname=tadoku_db sslmode=disable"
+	dsn := os.Getenv("TEST_DATABASE_URL")
+	if dsn == "" {
+	    dsn = "host=localhost port=5432 user=postgres password=password dbname=tadoku_db sslmode=disable"
+	}
 	db, err := sqlx.Connect("postgres", dsn)
 	require.NoError(t, err, "failed to connect to test database")
 	require.NoError(t, db.Ping(), "failed to ping test database")
