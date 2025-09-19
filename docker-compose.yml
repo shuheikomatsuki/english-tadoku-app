@@ -25,14 +25,14 @@ services:
       - .env
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: node:20-alpine
+    working_dir: /app
     ports:
-      - "5173:80"
+      - "5173:5173"
     volumes:
       - ./frontend:/app
-      - /app/node_modules # npm install でインストールされる node_modules をコンテナ内で独立して管理し、ホストOSと共有しないようにする。
+      - /app/node_modules
+    command: npm run dev -- --host
   
   db:
     image: postgres:15
