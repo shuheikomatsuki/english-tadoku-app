@@ -12,7 +12,11 @@ import (
 var testDB *sqlx.DB // 他のファイルで使うためにグローバル変数にしている
 
 func TestMain(m *testing.M) {
-	dsn := "host=localhost port=5432 user=postgres password=password dbname=tadoku_db sslmode=disable"
+	dsn := os.Getenv("TEST_DATABASE_URL")
+	if dsn == "" {
+		dsn = "host=localhost port=5432 user=postgres password=password dbname=tadoku_db sslmode=disable"
+	}
+	
 	var err error
 	testDB, err = sqlx.Connect("postgres", dsn)
 	if err != nil {
