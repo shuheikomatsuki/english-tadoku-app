@@ -1,25 +1,21 @@
 import './App.css'
-import SignUp from './components/SignUp';
-import Login from './components/Login';
+import { useAuth } from './contexts/AuthContext';
+import AuthPage from './components/AuthPage';
+import Dashboard from './components/Dashboard';
 
 function App() {
+  const { isAuthenticated } = useAuth();
+
   return (
-    <div className="min-h-screen bg-gray-100 py-10">
-      
-      <div className="container mx-auto px-4 max-w-lg"> 
-        
+    <div className="min-h-screen bg-gray-100">
+      <div className="container mx-auto p-4 py-10">
         <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">
           English Tadoku App
         </h1>
-        
-        <div className="space-y-8">
-          <SignUp />
-          <Login />
-        </div>
-
+        {isAuthenticated ? <Dashboard /> : <AuthPage />}
       </div>
     </div>
   );
-}
+};
 
-export default App
+export default App;
