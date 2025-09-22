@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import StoryGenerator from './StoryGenerator';
 
 const Dashboard: React.FC = () => {
   const { logout } = useAuth();
@@ -17,10 +18,9 @@ const Dashboard: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <p>Welcome to your dashboard!</p>
-        {/* TODO: ここにコンポーネントを追加 */}
-      </div>
+      <StoryGenerator />
+
+      {/* TODO: 他のダッシュボードコンテンツをここに追加可能 */}
     </div>
   );
 };
