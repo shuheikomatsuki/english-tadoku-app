@@ -4,9 +4,10 @@ import (
 	"os"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 
 	
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/middleware"
+	authMiddleware "github.com/shuheikomatsuki/english-tadoku-app/backend/internal/middleware"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/handler"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/service"
@@ -15,6 +16,10 @@ import (
 func main() {
 	e := echo.New()
 	
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:5173", "http://127.0.0.1:5173"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+	}))
 
 	// .env から読み込むなどの初期設定
 
@@ -38,7 +43,7 @@ func main() {
 	
 	// 認証が必要なグループ
 	stories := api.Group("/stories")
-	stories.Use(middleware.JWTAuthMiddleware) // TODO: JWT ミドルウェアを追加する処理
+	stories.Use(authMiddleware.JWTAuthMiddleware) // TODO: JWT ミドルウェアを追加する処理
 	stories.POST("", storyHandler.GenerateStory)
 	stories.GET("", storyHandler.GetStories)
 	stories.GET("/:id", storyHandler.GetStory)
