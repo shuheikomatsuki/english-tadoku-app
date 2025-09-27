@@ -6,6 +6,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+
+	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/handler"
 )
 
 func JWTAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
@@ -17,7 +19,9 @@ func JWTAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		claims := &handler.JwtCustomClaims{}
+
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, echo.ErrUnauthorized
 			}
