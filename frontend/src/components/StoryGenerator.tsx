@@ -1,15 +1,8 @@
 import React, { useState } from 'react';
 import apiClient from '../apiClient';
 import { SparklesIcon } from '@heroicons/react/24/outline';
+import type { Story } from '../types';
 
-interface Story {
-  id: number;
-  userId: number;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 interface StoryGeneratorProps {
   onStoryGenerated: (story: Story) => void;

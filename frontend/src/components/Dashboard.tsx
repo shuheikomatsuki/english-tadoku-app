@@ -3,16 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import StoryGenerator from './StoryGenerator';
 import StoryList from './StoryList';
 import apiClient from '../apiClient';
+import type { Story } from '../types';
 
-// 将来的には、共通の型定義ファイルにまとめた方がいいかも
-interface Story {
-  id: number;
-  userId: number;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 const Dashboard: React.FC = () => {
   const { logout } = useAuth();
