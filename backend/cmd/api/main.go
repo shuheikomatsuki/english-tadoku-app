@@ -21,6 +21,8 @@ func main() {
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 	}))
 
+	e.Validator = handler.NewValidator()
+
 	// .env から読み込むなどの初期設定
 
 	// DB接続

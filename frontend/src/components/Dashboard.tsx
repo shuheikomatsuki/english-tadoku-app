@@ -17,7 +17,7 @@ const Dashboard: React.FC = () => {
     const fetchStories = async () => {
       try {
         const response = await apiClient.get<Story[]>('/stories');
-        setStories(response.data);
+        setStories(response.data || []);
       } catch (err) {
         setError('Failed to load stories.');
         console.error(err);
