@@ -32,6 +32,20 @@ const Dashboard: React.FC = () => {
     setStories(prevStories => [newStory, ...prevStories]);
   };
 
+  const handleDeleteStory = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this story?')) {
+      return;
+    }
+
+    try {
+      await apiClient.delete(`/stories/${id}`);
+      setStories(prevStories => prevStories.filter(story => story.id !== id));
+    } catch (err) {
+      console.error('Failed to delete story:', err);
+      alert('Failed to delete the story. Please try again.');
+    }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-8">
@@ -54,7 +68,7 @@ const Dashboard: React.FC = () => {
       ) : error ? (
         <p className="mt-8 text-red-500">{error}</p>
       ) : (
-        <StoryList stories={stories} />
+        <StoryList stories={stories} onDeleteStory={handleDeleteStory} />
       )}
 
     </div>

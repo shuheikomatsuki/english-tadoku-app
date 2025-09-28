@@ -35,7 +35,7 @@ const StoryDetail: React.FC = () => {
 
       <h1 className="text-2xl font-bold p-4">{story?.title}</h1>
       <p className="text-sm text-gray-500 p-4">
-        Created on: {story ? new Date(story.createdAt).toLocaleString() : ''}
+        Created on: {story ? new Date(story.created_at).toLocaleString() : ''}
       </p>
       <div className="">
         <p className="">{story?.content}</p>
