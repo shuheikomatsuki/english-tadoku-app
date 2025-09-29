@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import apiClient from "../apiClient";
 import { Eye, EyeOff } from 'lucide-react';
+import axios from 'axios';
+import { AxiosError } from 'axios';
+
+interface ErrorResponse {
+  error: string;
+}
 
 const SignUp: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -18,8 +24,13 @@ const SignUp: React.FC = () => {
       console.log(response.data);
       setEmail("");
       setPassword("");
-    } catch (error) {
-      setMessage("Failed to create user. Please try again.");
+    } catch (error) { // TODO: validate error handling
+      if (axios.isAxiosError(error) && error.response) {
+        const errorData = error.response.data as ErrorResponse;
+        setMessage(errorData.error || "An unexpected error occurred.");
+      } else {
+        setMessage("Failed to create user. Please try again.");
+      }
       console.error(error);
     }
   };
