@@ -1,0 +1,37 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+
+const Header: React.FC = () => {
+  const { isAuthenticated, logout } = useAuth();
+
+  return (
+    <header className="bg-white shadow-md">
+      <div className="container mx-auto p-4 flex justify-between items-center">
+        <Link to="/" className="text-4xl font-bold text-gray-800">
+          English Tadoku App
+        </Link>
+
+        <nav className="flex items-center">
+          {isAuthenticated ? (
+            <button
+              onClick={logout}
+              className="bg-red-500 hover:bg-red-600 text-white text-xl font-bold m-4 py-2 px-4 rounded"
+            >
+              Logout
+            </button>
+          ) : (
+            <Link
+              to="/auth"
+              className="bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold py-2 px-4 rounded"
+            >
+              Login / Sign Up
+            </Link>
+          )}
+        </nav>
+      </div>
+    </header>
+  );
+};
+
+export default Header;
