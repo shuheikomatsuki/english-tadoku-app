@@ -17,7 +17,7 @@ const Dashboard: React.FC = () => {
     const fetchStories = async () => {
       try {
         const response = await apiClient.get<Story[]>('/stories');
-        setStories(response.data);
+        setStories(response.data || []);
       } catch (err) {
         setError('Failed to load stories.');
         console.error(err);
@@ -50,13 +50,13 @@ const Dashboard: React.FC = () => {
     <div className="w-full max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <button 
+        {/* <button 
           onClick={logout}
           className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition-colors"
           
         >
           Logout
-        </button>
+        </button> */}
       </div>
 
       <StoryGenerator onStoryGenerated={handleStoryGenerated} />
