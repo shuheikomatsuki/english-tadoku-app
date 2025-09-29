@@ -23,6 +23,11 @@ type MockStoryRepository struct {
 	mock.Mock
 }
 
+func (m *MockStoryRepository) CountUserStories(userID int) (int, error) {
+	args := m.Called(userID)
+	return args.Int(0), args.Error(1)
+}
+
 func (m *MockStoryRepository) CreateStory(story *model.Story) error {
 	args := m.Called(story)
 	if args.Error(0) == nil {

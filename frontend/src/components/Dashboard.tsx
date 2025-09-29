@@ -4,20 +4,30 @@ import StoryGenerator from './StoryGenerator';
 import StoryList from './StoryList';
 import apiClient from '../apiClient';
 import type { Story } from '../types';
+import { set } from 'date-fns';
 
+interface StoriesResponse {
+  stories: Story[];
+  total_pages: number;
+}
 
 const Dashboard: React.FC = () => {
   const { logout } = useAuth();
 
   const [stories, setStories] = useState<Story[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
+
   useEffect(() => {
     const fetchStories = async () => {
+      setIsLoading(true);
       try {
-        const response = await apiClient.get<Story[]>('/stories');
-        setStories(response.data || []);
+        const response = await apiClient.get<StoriesResponse>(`/stories?page=${currentPage}&limit=5`);
+        setStories(response.data.stories || []);
+        setTotalPages(response.data.total_pages);
       } catch (err) {
         setError('Failed to load stories.');
         console.error(err);
@@ -26,20 +36,27 @@ const Dashboard: React.FC = () => {
       }
     };
     fetchStories();
-  }, []);
+  }, [currentPage]);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
 
   const handleStoryGenerated = (newStory: Story) => {
-    setStories(prevStories => [newStory, ...prevStories]);
+    if (currentPage === 1) {
+      setStories(prevStories => [newStory, ...prevStories]);
+    } else {
+      setCurrentPage(1);
+    }
   };
 
   const handleDeleteStory = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this story?')) {
-      return;
-    }
+    if (!window.confirm('Are you sure?')) return;
 
     try {
       await apiClient.delete(`/stories/${id}`);
       setStories(prevStories => prevStories.filter(story => story.id !== id));
+      // TODO: 総ページ数の更新
     } catch (err) {
       console.error('Failed to delete story:', err);
       alert('Failed to delete the story. Please try again.');
@@ -68,7 +85,14 @@ const Dashboard: React.FC = () => {
       ) : error ? (
         <p className="mt-8 text-red-500">{error}</p>
       ) : (
-        <StoryList stories={stories} onDeleteStory={handleDeleteStory} />
+        <StoryList 
+          stories={stories} 
+          onDeleteStory={handleDeleteStory} 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          refetchTrigger={0}
+        />
       )}
 
     </div>

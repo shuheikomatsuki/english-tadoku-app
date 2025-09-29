@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"math"
 	"strconv"
 	"time"
 
@@ -25,6 +26,13 @@ type IStoryHandler interface {
 type StoryHandler struct {
 	StoryRepo repository.IStoryRepository
 	LLMService service.ILLMService
+}
+
+type GetStoriesResponse struct {
+	Stories     []*model.Story  `json:"stories"`
+	TotalCount  int             `json:"total_count"`
+	TotalPages  int             `json:"total_pages"`
+	CurrentPage int             `json:"current_page"`
 }
 
 func NewStoryHandler(storyRepo repository.IStoryRepository, llmService service.ILLMService) IStoryHandler {
@@ -87,16 +95,30 @@ func (h *StoryHandler) GetStories(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, "invalid token")
 	}
 
+	// --- クエリパラメータの解釈 ---
+	pageStr := c.QueryParam("page")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page <= 0 {
+		page = 1
+	}
+
 	limitStr := c.QueryParam("limit")
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit <= 0 {
 		limit = 10
 	}
 
-	offsetStr := c.QueryParam("offset")
-	offset, err := strconv.Atoi(offsetStr)
-	if err != nil || offset < 0 {
-		offset = 0
+	offset := (page - 1) * limit
+
+	// offsetStr := c.QueryParam("offset")
+	// offset, err := strconv.Atoi(offsetStr)
+	// if err != nil || offset < 0 {
+	// 	offset = 0
+	// }
+
+	totalCount, err := h.StoryRepo.CountUserStories(userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "database error"})
 	}
 
 	stories, err := h.StoryRepo.GetUserStories(userID, limit, offset)
@@ -104,7 +126,20 @@ func (h *StoryHandler) GetStories(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "database error"})
 	}
 
-	return c.JSON(http.StatusOK, stories)
+	if stories == nil {
+		stories = []*model.Story{}
+	}
+
+	totalPages := int(math.Ceil(float64(totalCount) / float64(limit)))
+
+	res := GetStoriesResponse{
+		Stories:    stories,
+		TotalCount: totalCount,
+		TotalPages: totalPages,
+		CurrentPage: page,
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 func (h *StoryHandler) GetStory(c echo.Context) error {
