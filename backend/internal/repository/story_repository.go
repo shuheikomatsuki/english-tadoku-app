@@ -10,6 +10,7 @@ import (
 type IStoryRepository interface {
 	CreateStory(story *model.Story) error
 	GetUserStories(userID, limit, offset int) ([]*model.Story, error)
+	CountUserStories(userID int) (int, error)
 	GetUserStory(storyID int, userID int) (*model.Story, error)
 	DeleteStory(storyID int) error
 }
@@ -49,6 +50,16 @@ func (r *sqlxStoryRepository) GetUserStories(userID, limit, offset int) ([]*mode
 		return nil, fmt.Errorf("failed to get user stories: %w", err)
 	}
 	return stories, nil
+}
+
+func (r *sqlxStoryRepository) CountUserStories(userID int) (int, error) {
+	var total int
+	query := `SELECT COUNT(*) FROM stories WHERE user_id = $1`
+	err := r.DB.Get(&total, query, userID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count user stories: %w", err)
+	}
+	return total, nil
 }
 
 func (r *sqlxStoryRepository) GetUserStory(storyID int, userID int) (*model.Story, error) {
