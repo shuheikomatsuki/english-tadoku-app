@@ -20,6 +20,7 @@ func TestAuthHandler_SignUp(t *testing.T) {
 	userRepo := repository.NewUserRepository(testDB)
 	h := NewAuthHandler(userRepo)
 	e := echo.New()
+	e.Validator = NewValidator()
 
 	cleanupUserTable(t)
 
@@ -52,6 +53,7 @@ func TestAuthHandler_Login(t *testing.T) {
 	userRepo := repository.NewUserRepository(testDB)
 	h := NewAuthHandler(userRepo)
 	e := echo.New()
+	e.Validator = NewValidator()
 
 	cleanupUserTable(t)
 
