@@ -155,7 +155,12 @@ func TestStoryHandler_GetStories(t *testing.T) {
 			newTestStory(2, testUserID),
 		}
 
-		limit, offset := 10, 0
+		// limit, offset := 10, 0
+		page, limit := 1, 10
+		offset := (page - 1) * limit
+
+		mockRepo.On("CountUserStories", testUserID).Return(len(expectedStories), nil).Once()
+
 		mockRepo.On("GetUserStories", testUserID, limit, offset).Return(expectedStories, nil).Once()
 
 		reqURL := fmt.Sprintf("/stories?limit=%d&offset=%d", limit, offset)
@@ -167,10 +172,18 @@ func TestStoryHandler_GetStories(t *testing.T) {
 		require.NoError(t, h.GetStories(c))
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var receivedStories []model.Story
-		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &receivedStories))
-		assert.Len(t, receivedStories, len(expectedStories))
-		assert.Equal(t, expectedStories[0].Title, receivedStories[0].Title)
+		// var receivedStories []model.Story
+		// require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &receivedStories))
+		// assert.Len(t, receivedStories, len(expectedStories))
+		// assert.Equal(t, expectedStories[0].Title, receivedStories[0].Title)
+
+		var response GetStoriesResponse
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
+		assert.Len(t, response.Stories, len(expectedStories))
+		assert.Equal(t, expectedStories[0].Title, response.Stories[0].Title)
+		assert.Equal(t, len(expectedStories), response.TotalCount)
+		assert.Equal(t, 1, response.TotalPages)
+		assert.Equal(t, page, response.CurrentPage)
 
 		mockRepo.AssertExpectations(t)
 	})
