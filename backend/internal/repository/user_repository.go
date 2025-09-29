@@ -1,11 +1,15 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/model"
 )
+
+var ErrEmailAlreadyExists = errors.New("email already exists")
 
 type IUserRepository interface {
 	CreateUser(user *model.User) error
@@ -28,6 +32,11 @@ func (r *sqlxUserRepository) CreateUser(user *model.User) error {
 	`
 	err := r.DB.QueryRowx(query, user.Email, user.PasswordHash).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
+		if pgErr, ok := err.(*pq.Error); ok {
+			if pgErr.Code == "23505" {
+				return ErrEmailAlreadyExists
+			}
+		}
 		return fmt.Errorf("failed to create user: %w", err)
 	}
 	return nil

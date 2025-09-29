@@ -18,5 +18,6 @@ func NewLLMService(apiKey string) ILLMService {
 
 func (s *LLMService) GenerateStory(prompt string) (string, error) {
 	// ここに Gemini API を呼び出すロジックを実装
-	return "Prompt: " + prompt, nil
+	content := `This is a generated story based on the prompt: "` + prompt + `".`
+	return content, nil
 }
