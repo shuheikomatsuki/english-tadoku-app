@@ -13,6 +13,7 @@ type IStoryRepository interface {
 	CountUserStories(userID int) (int, error)
 	GetUserStory(storyID int, userID int) (*model.Story, error)
 	DeleteStory(storyID int) error
+	UpdateStoryTitle(storyID int, userID int, newTitle string) (*model.Story, error)
 }
 
 type sqlxStoryRepository struct {
@@ -86,4 +87,19 @@ func (r *sqlxStoryRepository) DeleteStory(storyID int) error {
 		return fmt.Errorf("failed to delete story: %w", err)
 	}
 	return nil
+}
+
+func (r *sqlxStoryRepository) UpdateStoryTitle(storyID int, userID int, newTitle string) (*model.Story, error) {
+	var updatedStory model.Story
+	query := `
+		UPDATE stories
+		SET title = $1, updated_at = NOW()
+		WHERE id = $2 AND user_id = $3
+		RETURNING id, user_id, title, content, created_at, updated_at
+	`
+	err := r.DB.Get(&updatedStory, query, newTitle, storyID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update story: %w", err)
+	}
+	return &updatedStory, nil
 }

@@ -2,9 +2,10 @@ package handler
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
-	"net/http"
 	"math"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -21,6 +22,7 @@ type IStoryHandler interface {
 	GetStories(e echo.Context) error
 	GetStory(e echo.Context) error
 	DeleteStory(e echo.Context) error
+	UpdateStory(e echo.Context) error
 }
 
 type StoryHandler struct {
@@ -33,6 +35,10 @@ type GetStoriesResponse struct {
 	TotalCount  int             `json:"total_count"`
 	TotalPages  int             `json:"total_pages"`
 	CurrentPage int             `json:"current_page"`
+}
+
+type UpdateStoryRequest struct {
+	Title string `json:"title" validate:"required,min=1,max=100"`
 }
 
 func NewStoryHandler(storyRepo repository.IStoryRepository, llmService service.ILLMService) IStoryHandler {
@@ -109,12 +115,6 @@ func (h *StoryHandler) GetStories(c echo.Context) error {
 	}
 
 	offset := (page - 1) * limit
-
-	// offsetStr := c.QueryParam("offset")
-	// offset, err := strconv.Atoi(offsetStr)
-	// if err != nil || offset < 0 {
-	// 	offset = 0
-	// }
 
 	totalCount, err := h.StoryRepo.CountUserStories(userID)
 	if err != nil {
@@ -193,4 +193,34 @@ func (h *StoryHandler) DeleteStory(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusNoContent, nil)
+}
+
+func (h *StoryHandler) UpdateStory(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid story id"})
+	}
+
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, "invalid token")
+	}
+	
+	var req UpdateStoryRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+	}
+	if err := c.Validate(&req); err != nil {
+		return err
+	}
+
+	updatedStory, err := h.StoryRepo.UpdateStoryTitle(id, userID, req.Title)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "story not found"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to update story"})
+	}
+
+	return c.JSON(http.StatusOK, updatedStory)
 }

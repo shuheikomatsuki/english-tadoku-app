@@ -132,4 +132,28 @@ func TestStoryRepository(t *testing.T) {
 		_, err = storyRepo.GetUserStory(storyToDelete.ID, user.ID)
 		assert.Error(t, err)
 	})
+
+	t.Run("UpdateStoryTitle", func(t *testing.T) {
+		user := createTestUser(t, db)
+		originalStory := createTestStory(t, storyRepo, user.ID, "Original Title")
+		newTitle := "Updated Title"
+
+		updatedStory, err := storyRepo.UpdateStoryTitle(originalStory.ID, user.ID, newTitle)
+
+		require.NoError(t, err)
+		assert.Equal(t, originalStory.ID, updatedStory.ID)
+		assert.Equal(t, user.ID, updatedStory.UserID)
+		assert.Equal(t, newTitle, updatedStory.Title)
+		assert.Equal(t, originalStory.Content, updatedStory.Content)
+		assert.Equal(t, originalStory.CreatedAt, updatedStory.CreatedAt)
+		assert.True(t, updatedStory.UpdatedAt.After(originalStory.UpdatedAt), "UpdatedAt should be updated to a later time")
+
+		var fetchedStory model.Story
+		err = db.Get(&fetchedStory, "SELECT * FROM stories WHERE id = $1", originalStory.ID)
+		require.NoError(t, err)
+		assert.Equal(t, newTitle, fetchedStory.Title)
+		assert.Equal(t, originalStory.Content, fetchedStory.Content)
+		assert.Equal(t, originalStory.CreatedAt, fetchedStory.CreatedAt)
+		assert.True(t, fetchedStory.UpdatedAt.After(originalStory.UpdatedAt), "UpdatedAt in DB should be updated to a later time")
+	})
 }
