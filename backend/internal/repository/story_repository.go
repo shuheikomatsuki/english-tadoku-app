@@ -26,11 +26,11 @@ func NewStoryRepository(db *sqlx.DB) IStoryRepository {
 
 func (r *sqlxStoryRepository) CreateStory(story *model.Story) error {
 	query := `
-		INSERT INTO stories(user_id, title, content)
-		VALUES ($1, $2, $3)
+		INSERT INTO stories(user_id, title, content, word_count)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at, updated_at
 	`
-	err := r.DB.QueryRowx(query, story.UserID, story.Title, story.Content).Scan(&story.ID, &story.CreatedAt, &story.UpdatedAt)
+	err := r.DB.QueryRowx(query, story.UserID, story.Title, story.Content, story.WordCount).Scan(&story.ID, &story.CreatedAt, &story.UpdatedAt)
 	if err != nil {
 		return fmt.Errorf("failed to create story: %w", err)
 	}

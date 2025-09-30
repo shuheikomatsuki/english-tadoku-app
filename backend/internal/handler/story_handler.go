@@ -7,7 +7,8 @@ import (
 	"math"
 	"net/http"
 	"strconv"
-	"time"
+	"strings"
+	// "time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
@@ -80,12 +81,15 @@ func (h *StoryHandler) GenerateStory(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate story content"})
 	}
 
+	wordCount := len(strings.Fields(content))
+
 	story := &model.Story{
 		UserID: userID,
 		Title: req.Prompt,
 		Content: content,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		WordCount: wordCount,
+		// CreatedAt: time.Now(),
+		// UpdatedAt: time.Now(),
 	}
 
 	if err := h.StoryRepo.CreateStory(story); err != nil {

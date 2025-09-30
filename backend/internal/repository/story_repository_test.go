@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -42,6 +43,7 @@ func TestStoryRepository(t *testing.T) {
 			UserID:  user.ID,
 			Title:   title,
 			Content: content,
+			WordCount: len(strings.Fields(content)),
 		}
 
 		err := storyRepo.CreateStory(storyToCreate)
@@ -57,6 +59,7 @@ func TestStoryRepository(t *testing.T) {
 		assert.Equal(t, content, fetchedStory.Content)
 		assert.NotZero(t, fetchedStory.CreatedAt)
 		assert.NotZero(t, fetchedStory.UpdatedAt)
+		assert.Equal(t, storyToCreate.WordCount, fetchedStory.WordCount)
 	})
 
 	t.Run("GetUserStories", func(t *testing.T) {
