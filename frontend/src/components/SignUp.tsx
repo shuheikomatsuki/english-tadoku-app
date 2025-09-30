@@ -24,7 +24,7 @@ const SignUp: React.FC = () => {
       console.log(response.data);
       setEmail("");
       setPassword("");
-    } catch (error) { // TODO: validate error handling
+    } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         const errorData = error.response.data as ErrorResponse;
         setMessage(errorData.error || "An unexpected error occurred.");
