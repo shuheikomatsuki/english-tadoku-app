@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"google.golang.org/genai"
@@ -15,6 +16,11 @@ type ILLMService interface {
 type LLMService struct {
 	APIKey string
 	client *genai.Client
+}
+
+func countWords(text string) int {
+	words := strings.Fields(text)
+	return len(words)
 }
 
 func NewLLMService(apiKey string) ILLMService {
