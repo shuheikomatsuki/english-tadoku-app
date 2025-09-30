@@ -50,6 +50,7 @@ func main() {
 	stories.GET("", storyHandler.GetStories)
 	stories.GET("/:id", storyHandler.GetStory)
 	stories.DELETE("/:id", storyHandler.DeleteStory)
+	stories.PATCH("/:id", storyHandler.UpdateStory)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
