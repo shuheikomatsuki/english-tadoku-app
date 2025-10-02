@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"os"
 	"time"
@@ -29,8 +30,8 @@ func NewAuthHandler(userRepo repository.IUserRepository) IAuthHandler {
 }
 
 type SignUpRequest struct {
-	Email 	 string `json:"email"`
-	Password string `json:"password"`
+	Email 	 string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
 }
 
 type LoginRequest struct {
@@ -49,6 +50,10 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "invalid request body")
 	}
 
+	if err := c.Validate(&req); err != nil {
+		return err
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "failed to hash password")
@@ -61,6 +66,9 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 
 	if err := h.UserRepo.CreateUser(user); err != nil {
 		// TODO: email が重複した際のエラーハンドリング
+		if errors.Is(err, repository.ErrEmailAlreadyExists) {
+			return c.JSON(http.StatusConflict, map[string]string{"error": "This email address is already registered."})
+		}
 		return c.JSON(http.StatusInternalServerError, "failed to create user")
 	}
 

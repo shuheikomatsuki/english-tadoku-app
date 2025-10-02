@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
 import apiClient from '../apiClient';
 import { SparklesIcon } from '@heroicons/react/24/outline';
+import type { Story } from '../types';
 
-interface Story {
-  id: number;
-  userId: number;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
+
+interface StoryGeneratorProps {
+  onStoryGenerated: (story: Story) => void;
 }
 
-const StoryGenerator: React.FC = () => {
+const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) => {
   const [prompt, setPrompt] = useState('');
   const [generatedStory, setGeneratedStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,6 +27,8 @@ const StoryGenerator: React.FC = () => {
     try {
       const response = await apiClient.post<Story>('/stories', { prompt });
       setGeneratedStory(response.data);
+      onStoryGenerated(response.data);
+      setPrompt('');
     } catch (err) {
       setError('Failed to generate story. Please try again.');
       console.error(err);
@@ -67,11 +66,6 @@ const StoryGenerator: React.FC = () => {
           <span className="">{error}</span>
         </div>
       )}
-
-      {/* --- テスト用エラーメッセージ --- */}
-      <div className="bg-red-100 border border-red-400 px-4 py-3 rounded mb-6" role="alert">
-        <p>This is a sample error message.</p>
-      </div>
       
       {/* --- 生成されたストーリー表示 --- */}
       {generatedStory && (
@@ -81,13 +75,6 @@ const StoryGenerator: React.FC = () => {
         </div>
       )}
 
-      {/* --- テスト用生成されたストーリー表示 --- */}
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-bold p-2">The Mysterious Forest</h3>
-        <p className="whitespace-pre-wrap p-2">
-          Once upon a time, in a land far away, there was a mysterious forest that no one dared to enter. The trees were tall and twisted, and strange noises echoed through the air. One day, a brave young adventurer decided to explore the forest and uncover its secrets.
-        </p>
-      </div>
     </div>
   );
 };

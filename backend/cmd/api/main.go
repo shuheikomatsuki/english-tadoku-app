@@ -21,6 +21,8 @@ func main() {
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 	}))
 
+	e.Validator = handler.NewValidator()
+
 	// .env から読み込むなどの初期設定
 
 	// DB接続
@@ -48,6 +50,7 @@ func main() {
 	stories.GET("", storyHandler.GetStories)
 	stories.GET("/:id", storyHandler.GetStory)
 	stories.DELETE("/:id", storyHandler.DeleteStory)
+	stories.PATCH("/:id", storyHandler.UpdateStory)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

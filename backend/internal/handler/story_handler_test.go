@@ -23,6 +23,11 @@ type MockStoryRepository struct {
 	mock.Mock
 }
 
+func (m *MockStoryRepository) CountUserStories(userID int) (int, error) {
+	args := m.Called(userID)
+	return args.Int(0), args.Error(1)
+}
+
 func (m *MockStoryRepository) CreateStory(story *model.Story) error {
 	args := m.Called(story)
 	if args.Error(0) == nil {
@@ -52,6 +57,14 @@ func (m *MockStoryRepository) DeleteStory(id int) error {
 	return args.Error(0)
 }
 
+func (m *MockStoryRepository) UpdateStoryTitle(storyID, userID int, newTitle string) (*model.Story, error) {
+	args := m.Called(storyID, userID, newTitle)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Story), args.Error(1)
+}
+
 type MockLLMService struct {
 	mock.Mock
 }
@@ -62,17 +75,17 @@ func (m *MockLLMService) GenerateStory(prompt string) (string, error) {
 }
 
 const (
-	testUserID = 123
+	testUserID  = 123
 	testStoryID = 1
 )
 
 // テスト用のストーリーオブジェクトを生成するヘルパー関数
 func newTestStory(id, userID int) *model.Story {
 	return &model.Story{
-		ID: id,
-		UserID: userID,
-		Title: fmt.Sprintf("Story %d", id),
-		Content: fmt.Sprintf("This is the content for story %d", id),
+		ID:        id,
+		UserID:    userID,
+		Title:     fmt.Sprintf("Story %d", id),
+		Content:   fmt.Sprintf("This is the content for story %d", id),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -150,7 +163,12 @@ func TestStoryHandler_GetStories(t *testing.T) {
 			newTestStory(2, testUserID),
 		}
 
-		limit, offset := 10, 0
+		// limit, offset := 10, 0
+		page, limit := 1, 10
+		offset := (page - 1) * limit
+
+		mockRepo.On("CountUserStories", testUserID).Return(len(expectedStories), nil).Once()
+
 		mockRepo.On("GetUserStories", testUserID, limit, offset).Return(expectedStories, nil).Once()
 
 		reqURL := fmt.Sprintf("/stories?limit=%d&offset=%d", limit, offset)
@@ -162,10 +180,18 @@ func TestStoryHandler_GetStories(t *testing.T) {
 		require.NoError(t, h.GetStories(c))
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var receivedStories []model.Story
-		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &receivedStories))
-		assert.Len(t, receivedStories, len(expectedStories))
-		assert.Equal(t, expectedStories[0].Title, receivedStories[0].Title)
+		// var receivedStories []model.Story
+		// require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &receivedStories))
+		// assert.Len(t, receivedStories, len(expectedStories))
+		// assert.Equal(t, expectedStories[0].Title, receivedStories[0].Title)
+
+		var response GetStoriesResponse
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
+		assert.Len(t, response.Stories, len(expectedStories))
+		assert.Equal(t, expectedStories[0].Title, response.Stories[0].Title)
+		assert.Equal(t, len(expectedStories), response.TotalCount)
+		assert.Equal(t, 1, response.TotalPages)
+		assert.Equal(t, page, response.CurrentPage)
 
 		mockRepo.AssertExpectations(t)
 	})
@@ -187,10 +213,10 @@ func TestStoryHandler_GenerateStory(t *testing.T) {
 		prompt := "A story abount Go"
 		generatedContent := "Go is a statically typed, compiled programming language..."
 		requestBody := fmt.Sprintf(`{"prompt": "%s"}`, prompt)
-	
+
 		mockLLM.On("GenerateStory", prompt).Return(generatedContent, nil).Once()
 		mockRepo.On("CreateStory", mock.AnythingOfType("*model.Story")).Return(nil).Once()
-	
+
 		req := httptest.NewRequest(http.MethodPost, "/stories", strings.NewReader(requestBody))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
@@ -199,7 +225,7 @@ func TestStoryHandler_GenerateStory(t *testing.T) {
 
 		require.NoError(t, h.GenerateStory(c))
 		assert.Equal(t, http.StatusCreated, rec.Code)
-	
+
 		var responseBody model.Story
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &responseBody))
 		assert.Equal(t, prompt, responseBody.Title)
@@ -253,5 +279,69 @@ func TestStoryHandler_DeleteStory(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+}
+
+func TestStoryHandler_UpdateStory(t *testing.T) {
+	mockRepo := new(MockStoryRepository)
+	mockLLM := new(MockLLMService)
+	h := NewStoryHandler(mockRepo, mockLLM)
+	e := echo.New()
+	e.Validator = NewValidator()
+
+	claims := &JwtCustomClaims{
+		testUserID,
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1))},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	t.Run("success: should update a story title", func(t *testing.T) {
+		newTitle := "Updated Story Title"
+		requestBody := fmt.Sprintf(`{"title": "%s"}`, newTitle)
+
+		updatedStory := newTestStory(testStoryID, testUserID)
+		updatedStory.Title = newTitle
+
+		mockRepo.On("UpdateStoryTitle", testStoryID, testUserID, newTitle).Return(updatedStory, nil).Once()
+
+		req := httptest.NewRequest(http.MethodPatch, "/", strings.NewReader(requestBody))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.Set("user", token)
+		c.SetPath("/stories/:id")
+		c.SetParamNames("id")
+		c.SetParamValues(strconv.Itoa(testStoryID))
+
+		err := h.UpdateStory(c)
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var receivedStory model.Story
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &receivedStory))
+		assert.Equal(t, newTitle, receivedStory.Title)
+		assert.Equal(t, testStoryID, receivedStory.ID)
+
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("fail: should return 400 for invalid request body", func(t *testing.T) {
+		requestBody := `{"title": ""}`
+
+		req := httptest.NewRequest(http.MethodPatch, "/", strings.NewReader(requestBody))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.Set("user", token)
+		c.SetPath("/stories/:id")
+		c.SetParamNames("id")
+		c.SetParamValues(strconv.Itoa(testStoryID))
+
+		err := h.UpdateStory(c)
+
+		var httpErr *echo.HTTPError
+		require.ErrorAs(t, err, &httpErr)
+		assert.Equal(t, http.StatusBadRequest, httpErr.Code)
 	})
 }

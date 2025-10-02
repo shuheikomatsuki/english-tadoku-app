@@ -17,19 +17,19 @@ export const AuthProvider: React.FC< { children: ReactNode }> = ({ children }) =
         const token = localStorage.getItem('token');
         if (token) {
             setIsAuthenticated(true);
-            apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            // apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         }
     }, []);
 
     const login = (token: string) => {
         localStorage.setItem('token', token);
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        // apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         setIsAuthenticated(true);
     };
 
     const logout = () => {
         localStorage.removeItem('token');
-        delete apiClient.defaults.headers.common['Authorization'];
+        // delete apiClient.defaults.headers.common['Authorization'];
         setIsAuthenticated(false);
     };
 
