@@ -1,8 +1,9 @@
 export interface Story {
   id: number;
-  userId: number;
+  user_id: number;
   title: string;
   content: string;
+  word_count: number;
   created_at: string;
   updated_at: string;
 }

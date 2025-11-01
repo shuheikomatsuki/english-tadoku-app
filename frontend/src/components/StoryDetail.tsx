@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../apiClient';
 import type { Story } from '../types';
-import { PencilIcon, CheckIcon, XMarkIcon, BookOpenIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ClockIcon, BookOpenIcon as ReadCountIcon, HashtagIcon } from '@heroicons/react/24/outline';
 import { format, parseISO } from 'date-fns';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface StoryDetailData extends Story {
   read_count: number;
@@ -99,10 +102,10 @@ const StoryDetail: React.FC = () => {
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md mx-auto max-w-2xl">
+    <div className="bg-white p-6 rounded-lg shadow-md">
       <Link to="/" className="text-blue-500 text-2xl hover:underline mb-4">&larr; Back to Dashboard</Link>
 
-      <div className="mb-4">
+      <div className="mb-4 pt-4">
         {isEditing ? (
           // --- 編集モード ---
           <input
@@ -133,17 +136,36 @@ const StoryDetail: React.FC = () => {
         </div>
       )}
 
-      <div className="flex justify-between items-center text-sm text-gray-500 mb-4 pt-4">
-        <p>
-          Created on: {storyDetail ? format(parseISO(storyDetail.created_at), 'PPPPp') : ''}
-        </p>
-        <p className="font-bold">
-          Read Count: {storyDetail?.read_count || 0}
-        </p>
+      <div className="flex justify-between items-center mb-6 border-t border-b py-3">
+        {/* 作成日 */}
+        <div className="flex items-center">
+          <ClockIcon className="h-4 w-4 mr-1.5" />
+          <span>
+            {storyDetail ? format(parseISO(storyDetail.created_at), 'MMM d, yyyy') : ''}
+          </span>
+        </div>
+        
+        {/* 単語数 */}
+        <div className="flex items-center">
+          <HashtagIcon className="h-4 w-4 mr-1.5" />
+          <span className="font-semibold">
+            {storyDetail?.word_count.toLocaleString()} words
+          </span>
+        </div>
+
+        {/* 読んだ回数 */}
+        <div className="flex items-center">
+          <ReadCountIcon className="h-4 w-4 mr-1.5" />
+          <span className="font-semibold">
+            Read {storyDetail?.read_count || 0} time(s)
+          </span>
+        </div>
       </div>
 
-      <div className="prose max-w-none mb-6 pt-10">
-        <p className="whitespace-pre-wrap">{storyDetail?.content}</p>
+      <div className="prose max-w-none prose-sm sm:prose-base mb-6 pt-10 text-left">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {storyDetail?.content || ''}
+        </ReactMarkdown>
       </div>
 
       {/* 読了マークボタン */}
@@ -153,7 +175,7 @@ const StoryDetail: React.FC = () => {
           disabled={isSubmitting}
           className="w-full flex items-center justify-center py-2 px-4 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600"
         >
-          <BookOpenIcon className="h-5 w-5 mr-2" />
+          <CheckIcon className="h-5 w-5 mr-2" />
           {isSubmitting ? 'Recording...' : 'Mark as Read'}
         </button>
 
@@ -173,4 +195,3 @@ const StoryDetail: React.FC = () => {
 };
 
 export default StoryDetail;
-

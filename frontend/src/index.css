@@ -68,3 +68,16 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 } */
+
+/* Tailwind Typography の追加カスタマイズ */
+.prose {
+  @apply text-gray-800;
+}
+
+.prose pre {
+  @apply bg-gray-100 rounded-lg p-4 overflow-x-auto;
+}
+
+.prose code {
+  @apply text-sm font-mono text-blue-600;
+}
