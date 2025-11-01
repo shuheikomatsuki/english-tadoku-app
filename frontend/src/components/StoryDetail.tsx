@@ -69,7 +69,14 @@ const StoryDetail: React.FC = () => {
   };
 
   const handleMarkAsRead = async () => {
-    if (!storyDetail) return;
+    if (!storyDetail || isSubmitting) return;
+
+    if (storyDetail.read_count > 0) {
+      if (!window.confirm('You have read this story before. Do you want to record it again?')) {
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       await apiClient.post(`/stories/${storyDetail.id}/read`);
@@ -85,6 +92,11 @@ const StoryDetail: React.FC = () => {
 
   const handleUndoRead = async () => {
     if (!storyDetail) return;
+
+    if (!window.confirm('Are you sure you want to remove the last reading record?')) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await apiClient.delete(`/stories/${storyDetail.id}/read/latest`);

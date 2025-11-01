@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import apiClient from '../apiClient';
-import { SparklesIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import type { Story } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 
 interface StoryGeneratorProps {
@@ -9,6 +10,7 @@ interface StoryGeneratorProps {
 }
 
 const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) => {
+  const navigate = useNavigate();
   const [prompt, setPrompt] = useState('');
   const [generatedStory, setGeneratedStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,9 +28,11 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
 
     try {
       const response = await apiClient.post<Story>('/stories', { prompt });
+      const newStory = response.data;
       setGeneratedStory(response.data);
       onStoryGenerated(response.data);
       setPrompt('');
+      navigate(`/stories/${newStory.id}`);
     } catch (err) {
       setError('Failed to generate story. Please try again.');
       console.error(err);
@@ -55,8 +59,23 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
           onClick={handleGenerate}
           disabled={isLoading}
         >
-          <SparklesIcon className="h-5 w-5 mr-2" />
-          {isLoading ? 'Generating...' : 'Generate Story'}
+          {/* <SparklesIcon className="h-5 w-5 mr-2" />
+          {isLoading ? 'Generating...' : 'Generate Story'} */}
+          {isLoading ? (
+            // --- ローディング中の表示 ---
+            <>
+              {/* ↓↓↓↓↓↓ LoaderCircle を ArrowPathIcon に置き換え ↓↓↓↓↓↓ */}
+              <ArrowPathIcon className="h-5 w-5 mr-3 animate-spin" />
+              {/* ↑↑↑↑↑↑ --------------------------------------------- ↑↑↑↑↑↑ */}
+              <span>Generating...</span>
+            </>
+          ) : (
+            // --- 通常時の表示 (変更なし) ---
+            <>
+              <SparklesIcon className="h-5 w-5 mr-2" />
+              <span>Generate Story</span>
+            </>
+          )}
         </button>
       </div>
 
@@ -68,12 +87,12 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
       )}
       
       {/* --- 生成されたストーリー表示 --- */}
-      {generatedStory && (
+      {/* {generatedStory && (
         <div className="bg-white p-6 rounded-lg shadow-md animate-fade-in">
           <h3 className="text-lg font-bold p-2">{generatedStory.title}</h3>
           <p className="whitespace-pre-wrap p-2">{generatedStory.content}</p>
         </div>
-      )}
+      )} */}
 
     </div>
   );
