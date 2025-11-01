@@ -17,6 +17,7 @@ import (
 type IAuthHandler interface {
 	SignUp(e echo.Context) error
 	Login(e echo.Context) error
+	GetUserStats(e echo.Context) error
 }
 
 type AuthHandler struct {
@@ -27,6 +28,10 @@ func NewAuthHandler(userRepo repository.IUserRepository) IAuthHandler {
 	return &AuthHandler{
 		UserRepo: userRepo,
 	}
+}
+
+type UserStatsResponse struct {
+	TotalWordCount int `json:"total_word_count"`
 }
 
 type SignUpRequest struct {
@@ -108,4 +113,22 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"token": t,
 	})
+}
+
+func (h *AuthHandler) GetUserStats(c echo.Context) error {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, "invalid token")
+	}
+
+	totalWordCount, err := h.UserRepo.GetUserTotalWordCount(userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to get user stats"})
+	}
+
+	res := UserStatsResponse{
+		TotalWordCount: totalWordCount,
+	}
+
+	return c.JSON(http.StatusOK, res)
 }

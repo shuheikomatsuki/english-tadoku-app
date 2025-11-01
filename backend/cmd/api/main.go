@@ -42,6 +42,10 @@ func main() {
 	api := e.Group("/api/v1")
 	api.POST("/signup", authHandler.SignUp)
 	api.POST("/login", authHandler.Login)
+
+	userRoutes := api.Group("/users")
+	userRoutes.Use(authMiddleware.JWTAuthMiddleware)
+	userRoutes.GET("/me/stats", authHandler.GetUserStats)
 	
 	// 認証が必要なグループ
 	stories := api.Group("/stories")
