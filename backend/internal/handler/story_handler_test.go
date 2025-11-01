@@ -130,7 +130,10 @@ func TestStoryHandler_GetStory(t *testing.T) {
 
 	t.Run("success: should return a story", func(t *testing.T) {
 		expectedStory := newTestStory(testStoryID, testUserID)
+		expectedReadCount := 5
+
 		mockRepo.On("GetUserStory", testStoryID, testUserID).Return(expectedStory, nil).Once()
+		mockRepo.On("CountReadingRecords", testUserID, testStoryID).Return(expectedReadCount, nil).Once()
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
@@ -143,10 +146,10 @@ func TestStoryHandler_GetStory(t *testing.T) {
 		require.NoError(t, h.GetStory(c))
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var receivedStory model.Story
-		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &receivedStory))
-		assert.Equal(t, expectedStory.Title, receivedStory.Title)
-		assert.Equal(t, expectedStory.Content, receivedStory.Content)
+		var receivedResponse StoryDetailResponse
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &receivedResponse))
+		assert.Equal(t, expectedStory.Title, receivedResponse.Story.Title)
+		assert.Equal(t, expectedReadCount, receivedResponse.ReadCount)
 
 		mockRepo.AssertExpectations(t)
 	})
