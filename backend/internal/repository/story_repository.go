@@ -66,7 +66,7 @@ func (r *sqlxStoryRepository) CountUserStories(userID int) (int, error) {
 
 func (r *sqlxStoryRepository) GetUserStory(storyID int, userID int) (*model.Story, error) {
 	query := `
-		SELECT id, user_id, title, content, created_at, updated_at
+		SELECT id, user_id, title, content, created_at, updated_at, word_count
 		FROM stories
 		WHERE id = $1 AND user_id = $2
 	`

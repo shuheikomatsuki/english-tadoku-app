@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import apiClient from '../apiClient';
 import type { Story } from '../types';
-import { PencilIcon, CheckIcon, XMarkIcon} from '@heroicons/react/24/outline';
-import { format, parseISO, set } from 'date-fns';
+import { PencilIcon, CheckIcon, XMarkIcon, BookOpenIcon } from '@heroicons/react/24/outline';
+import { format, parseISO } from 'date-fns';
 
 
 const StoryDetail: React.FC = () => {
@@ -14,6 +14,7 @@ const StoryDetail: React.FC = () => {
   const [updateError, setUpdateError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchStory = async () => {
@@ -60,6 +61,20 @@ const StoryDetail: React.FC = () => {
     setUpdateError('');
   };
 
+  const handleMarkAsRead = async () => {
+    if (!story) return;
+    setIsSubmitting(true);
+    try {
+      await apiClient.post(`/stories/${story.id}/read`);
+      alert('Your reading has been recorded!');
+    } catch (error) {
+      console.error('Failed to mark as read', error);
+      alert('Failed to record your reading.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (isLoading) return <p>Loading story...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
@@ -103,6 +118,19 @@ const StoryDetail: React.FC = () => {
       </p>
       <div className="prose max-w-none mb-6">
         <p className="whitespace-pre-wrap">{story?.content}</p>
+      </div>
+
+      {/* 読了マークボタン */}
+      <div className="pt-6 mt-6">
+        <button
+          onClick={handleMarkAsRead}
+          disabled={isSubmitting}
+          className="w-full flex items-center justify-center py-2 px-4 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600"
+        >
+          <BookOpenIcon className="h-5 w-5 mr-2" />
+          {isSubmitting ? 'Recording...' : 'Mark as Read'}
+        </button>
+
       </div>
     </div>
   );
