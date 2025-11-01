@@ -5,10 +5,14 @@ import type { Story } from '../types';
 import { PencilIcon, CheckIcon, XMarkIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import { format, parseISO } from 'date-fns';
 
+interface StoryDetailData extends Story {
+  read_count: number;
+}
+
 
 const StoryDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [story, setStory] = useState<Story | null>(null);
+  const [storyDetail, setStoryDetail] = useState<StoryDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [updateError, setUpdateError] = useState('');
@@ -19,8 +23,8 @@ const StoryDetail: React.FC = () => {
   useEffect(() => {
     const fetchStory = async () => {
       try {
-        const response = await apiClient.get<Story>(`/stories/${id}`);
-        setStory(response.data);
+        const response = await apiClient.get<StoryDetailData>(`/stories/${id}`);
+        setStoryDetail(response.data);
         setEditedTitle(response.data.title);
       } catch (err) {
         setError('Failed to load the story.');
@@ -34,7 +38,7 @@ const StoryDetail: React.FC = () => {
   }, [id]);
 
   const handleSave = async () => {
-    if (!story) return;
+    if (!storyDetail) return;
 
     if (!editedTitle.trim()) {
       setUpdateError('Title cannot be empty.');
@@ -44,8 +48,8 @@ const StoryDetail: React.FC = () => {
     setUpdateError('');
 
     try {
-      const response = await apiClient.patch<Story>(`/stories/${story.id}`, { title: editedTitle });
-      setStory(response.data);
+      const response = await apiClient.patch<StoryDetailData>(`/stories/${storyDetail.id}`, { title: editedTitle });
+      setStoryDetail(response.data);
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to update title:', error);
@@ -55,21 +59,37 @@ const StoryDetail: React.FC = () => {
   };
 
   const handleCancel = () => {
-    if (!story) return;
-    setEditedTitle(story.title);
+    if (!storyDetail) return;
+    setEditedTitle(storyDetail.title);
     setIsEditing(false);
     setUpdateError('');
   };
 
   const handleMarkAsRead = async () => {
-    if (!story) return;
+    if (!storyDetail) return;
     setIsSubmitting(true);
     try {
-      await apiClient.post(`/stories/${story.id}/read`);
+      await apiClient.post(`/stories/${storyDetail.id}/read`);
+      setStoryDetail(prev => prev ? { ...prev, read_count: prev.read_count + 1} : null);
       alert('Your reading has been recorded!');
     } catch (error) {
       console.error('Failed to mark as read', error);
       alert('Failed to record your reading.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUndoRead = async () => {
+    if (!storyDetail) return;
+    setIsSubmitting(true);
+    try {
+      await apiClient.delete(`/stories/${storyDetail.id}/read/latest`);
+      setStoryDetail(prev => prev ? { ...prev, read_count: Math.max(0, prev.read_count - 1) } : null);
+      alert('Last reading record has been removed.');
+    } catch (err) {
+      console.error('Failed to undo last read', err);
+      alert('Failed to undo last reading record.');
     } finally {
       setIsSubmitting(false);
     }
@@ -93,7 +113,7 @@ const StoryDetail: React.FC = () => {
           />
         ) : (
           // --- 表示モード ---
-          <h1 className="text-3xl font-bold">{story?.title}</h1>
+          <h1 className="text-3xl font-bold">{storyDetail?.title}</h1>
         )}
 
         {isEditing ? (
@@ -113,11 +133,17 @@ const StoryDetail: React.FC = () => {
         </div>
       )}
 
-      <p className="text-sm text-gray-500 mb-4">
-        Created on: {story ? format(parseISO(story.created_at), 'PPPPp') : ''}
-      </p>
-      <div className="prose max-w-none mb-6">
-        <p className="whitespace-pre-wrap">{story?.content}</p>
+      <div className="flex justify-between items-center text-sm text-gray-500 mb-4 pt-4">
+        <p>
+          Created on: {storyDetail ? format(parseISO(storyDetail.created_at), 'PPPPp') : ''}
+        </p>
+        <p className="font-bold">
+          Read Count: {storyDetail?.read_count || 0}
+        </p>
+      </div>
+
+      <div className="prose max-w-none mb-6 pt-10">
+        <p className="whitespace-pre-wrap">{storyDetail?.content}</p>
       </div>
 
       {/* 読了マークボタン */}
@@ -131,6 +157,16 @@ const StoryDetail: React.FC = () => {
           {isSubmitting ? 'Recording...' : 'Mark as Read'}
         </button>
 
+        {storyDetail && storyDetail.read_count > 0 && (
+          <button
+            onClick={handleUndoRead}
+            disabled={isSubmitting}
+            className="w-full p-2 bg-gray-200 hover:bg-gray-300 rounded-full mt-6 font-bold"
+            title="Undo last read"
+          >
+            Undo Last Read
+          </button>
+        )}
       </div>
     </div>
   );

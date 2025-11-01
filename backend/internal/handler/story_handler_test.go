@@ -71,6 +71,24 @@ func (m *MockStoryRepository) CreateReadingRecord(userID, storyID, wordCount int
 	return args.Error(0)
 }
 
+func (m *MockStoryRepository) CountReadingRecords(userID, storyID int) (int, error)  {
+	args := m.Called(userID, storyID)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *MockStoryRepository) GetLatestReadingRecord(userID, storyID int) (*model.ReadingRecord, error) {
+	args := m.Called(userID, storyID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.ReadingRecord), args.Error(1)
+}
+
+func (m *MockStoryRepository) DeleteReadingRecord(recordID int, userID int) error {
+	args := m.Called(recordID, userID)
+	return args.Error(0)
+}
+
 type MockLLMService struct {
 	mock.Mock
 }
