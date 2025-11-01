@@ -14,6 +14,7 @@ var ErrEmailAlreadyExists = errors.New("email already exists")
 type IUserRepository interface {
 	CreateUser(user *model.User) error
 	FindUserByEmail(email string) (*model.User, error)
+	GetUserTotalWordCount(userID int) (int, error)
 }
 
 type sqlxUserRepository struct {
@@ -50,4 +51,16 @@ func (r *sqlxUserRepository) FindUserByEmail(email string) (*model.User, error) 
 		return nil, fmt.Errorf("failed to find user by email: %w", err)
 	}
 	return &user, nil
+}
+
+func (r *sqlxUserRepository) GetUserTotalWordCount(userID int) (int, error) {
+	var total int
+	query := `SELECT COALESCE(SUM(word_count), 0) FROM reading_records WHERE user_id = $1`
+	
+	err := r.DB.Get(&total, query, userID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get user total word count: %w", err)
+	}
+
+	return total, nil
 }
