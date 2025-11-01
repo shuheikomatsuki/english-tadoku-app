@@ -159,4 +159,23 @@ func TestStoryRepository(t *testing.T) {
 		assert.Equal(t, originalStory.CreatedAt, fetchedStory.CreatedAt)
 		assert.True(t, fetchedStory.UpdatedAt.After(originalStory.UpdatedAt), "UpdatedAt in DB should be updated to a later time")
 	})
+
+	t.Run("CreateReadingRecord", func(t *testing.T) {
+		user := createTestUser(t, db)
+		story := createTestStory(t, storyRepo, user.ID, "This is a test story for reading record")
+
+		story.WordCount = len(strings.Fields(story.Content))
+
+		err := storyRepo.CreateReadingRecord(user.ID, story.ID, story.WordCount)
+
+		require.NoError(t, err)
+
+		var record model.ReadingRecord
+		err = db.Get(&record, "SELECT * FROM reading_records WHERE user_id = $1 AND story_id = $2", user.ID, story.ID)
+		require.NoError(t, err)
+		assert.Equal(t, user.ID, record.UserID)
+		assert.Equal(t, story.ID, record.StoryID)
+		assert.Equal(t, story.WordCount, record.WordCount)
+		assert.NotZero(t, record.ReadAt)
+	})
 }

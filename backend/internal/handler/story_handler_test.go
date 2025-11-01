@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -63,6 +64,11 @@ func (m *MockStoryRepository) UpdateStoryTitle(storyID, userID int, newTitle str
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*model.Story), args.Error(1)
+}
+
+func (m *MockStoryRepository) CreateReadingRecord(userID, storyID, wordCount int) error {
+	args := m.Called(userID, storyID, wordCount)
+	return args.Error(0)
 }
 
 type MockLLMService struct {
@@ -343,5 +349,61 @@ func TestStoryHandler_UpdateStory(t *testing.T) {
 		var httpErr *echo.HTTPError
 		require.ErrorAs(t, err, &httpErr)
 		assert.Equal(t, http.StatusBadRequest, httpErr.Code)
+	})
+}
+
+func TestStoryHandler_MarkStoryAsRead(t *testing.T) {
+	mockRepo := new(MockStoryRepository)
+	mockLLM := new(MockLLMService)
+	h := NewStoryHandler(mockRepo, mockLLM)
+	e := echo.New()
+
+	claims := &JwtCustomClaims{
+		testUserID, 
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1))},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	t.Run("success: should mark a story as read", func(t *testing.T) {
+		storyToRead := newTestStory(testStoryID, testUserID)
+		storyToRead.WordCount = 50
+
+		mockRepo.On("GetUserStory", testStoryID, testUserID).Return(storyToRead, nil).Once()
+		mockRepo.On("CreateReadingRecord", testUserID, testStoryID, storyToRead.WordCount).Return(nil).Once()
+
+		req := httptest.NewRequest(http.MethodPost, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.Set("user", token)
+		c.SetPath("/stories/:id/read")
+		c.SetParamNames("id")
+		c.SetParamValues(strconv.Itoa(testStoryID))
+
+		err := h.MarkStoryAsRead(c)
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusCreated, rec.Code)
+		
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("fail: should return 404 if story not found", func(t *testing.T) {
+		nonExistingStoryID := 99
+		mockRepo.On("GetUserStory", nonExistingStoryID, testUserID).Return(nil, sql.ErrNoRows).Once()
+
+		req := httptest.NewRequest(http.MethodPost, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.Set("user", token)
+		c.SetPath("/stories/:id/read")
+		c.SetParamNames("id")
+		c.SetParamValues(strconv.Itoa(nonExistingStoryID))
+
+		err := h.MarkStoryAsRead(c)
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+
+		mockRepo.AssertExpectations(t)
 	})
 }

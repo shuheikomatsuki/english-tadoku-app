@@ -14,6 +14,7 @@ type IStoryRepository interface {
 	GetUserStory(storyID int, userID int) (*model.Story, error)
 	DeleteStory(storyID int) error
 	UpdateStoryTitle(storyID int, userID int, newTitle string) (*model.Story, error)
+	CreateReadingRecord(userID, stortyID, WordCount int) error
 }
 
 type sqlxStoryRepository struct {
@@ -102,4 +103,16 @@ func (r *sqlxStoryRepository) UpdateStoryTitle(storyID int, userID int, newTitle
 		return nil, fmt.Errorf("failed to update story: %w", err)
 	}
 	return &updatedStory, nil
+}
+
+func (r *sqlxStoryRepository) CreateReadingRecord(userID, storyID, wordCount int) error {
+	query := `
+		INSERT INTO reading_records(user_id, story_id, word_count)
+		VALUES ($1, $2, $3)
+	`
+	_, err := r.DB.Exec(query, userID, storyID, wordCount)
+	if err != nil {
+		return fmt.Errorf("failed to create reading record: %w", err)
+	}
+	return nil
 }

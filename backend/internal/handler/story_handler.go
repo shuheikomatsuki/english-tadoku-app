@@ -24,6 +24,7 @@ type IStoryHandler interface {
 	GetStory(e echo.Context) error
 	DeleteStory(e echo.Context) error
 	UpdateStory(e echo.Context) error
+	MarkStoryAsRead(e echo.Context) error
 }
 
 type StoryHandler struct {
@@ -227,4 +228,33 @@ func (h *StoryHandler) UpdateStory(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, updatedStory)
+}
+
+func (h *StoryHandler) MarkStoryAsRead(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid story id"})
+	}
+
+	// JWTからユーザーIDを取得
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, "invalid token")
+	}
+
+	// ストーリーが存在するか確認
+	story, err := h.StoryRepo.GetUserStory(id, userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "story not found"})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "database error"})
+	}
+
+	// 読書記録を作成
+	err = h.StoryRepo.CreateReadingRecord(userID, story.ID, story.WordCount)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create reading record"})
+	}
+	return c.JSON(http.StatusCreated, map[string]string{"message": "Story marked as read successfully"})
 }
