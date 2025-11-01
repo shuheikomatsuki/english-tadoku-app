@@ -117,29 +117,33 @@ const StoryDetail: React.FC = () => {
     <div className="bg-white p-6 rounded-lg shadow-md">
       <Link to="/" className="text-blue-500 text-2xl hover:underline mb-4">&larr; Back to Dashboard</Link>
 
-      <div className="mb-4 pt-4">
+      <div className="my-4 pt-6">
         {isEditing ? (
           // --- 編集モード ---
-          <input
-            type="text"
-            value={editedTitle}
-            onChange={(e) => setEditedTitle(e.target.value)}
-            className="text-3xl font-bold border-b-2 border-blue-500 focus:outline-none w-full p-2 mb-4"
-          />
-        ) : (
-          // --- 表示モード ---
-          <h1 className="text-3xl font-bold">{storyDetail?.title}</h1>
-        )}
-
-        {isEditing ? (
-          <div className="flex space-x-2">
-            <button onClick={handleSave} className="bg-blue-500 text-white px-4 py-2 rounded mt-2"><CheckIcon className="h-5 w-5" /></button>
-            <button onClick={handleCancel} className="bg-gray-300 text-gray-700 px-4 py-2 rounded"><XMarkIcon className="h-5 w-5" /></button>
+          <div className="flex items-center space-x-2">
+            <input
+              type="text"
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              className="text-3xl font-bold border-b-2 border-blue-500 focus:outline-none w-full"
+              autoFocus
+            />
+            <button onClick={handleSave} className="p-2 text-green-600 hover:bg-green-100 rounded-full"><CheckIcon className="h-6 w-6" /></button>
+            <button onClick={handleCancel} className="p-2 text-red-600 hover:bg-red-100 rounded-full"><XMarkIcon className="h-6 w-6" /></button>
           </div>
         ) : (
-            <button onClick={() => setIsEditing(true)} className="bg-blue-500 text-white px-4 py-2 rounded mt-2"><PencilIcon className="h-5 w-5" /></button>
+          // --- 表示モード ---
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold">{storyDetail?.title}</h1>
+            <button 
+              onClick={() => setIsEditing(true)} 
+              className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
+              aria-label="Edit title"
+            >
+              <PencilIcon className="h-6 w-6" />
+            </button>
+          </div>
         )}
-
       </div>
 
       {updateError && (

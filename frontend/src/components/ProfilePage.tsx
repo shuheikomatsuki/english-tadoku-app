@@ -22,22 +22,31 @@ const BarChart: React.FC<{ data: { [date: string]: number } }> = ({ data }) => {
     return <p className="text-center">No recent activity.</p>;
   }
 
-  const labels = Object.keys(data).map(date => new Date(date).toLocaleDateString('en-US', { weekday: 'short' }));
-  const values = Object.values(data);
+  const entries = Object.entries(data);
+  const values = entries.map(([, value]) => value);
   const maxValue = Math.max(...values, 1);
 
   return (
     <div className="mt-8">
       <h3 className="text-lg font-semibold mb-4 text-center">Last 7 Days</h3>
       <div className="flex justify-around items-end h-40 bg-gray-50 p-4 rounded-lg">
-        {values.map((value, index) => (
-          <div key={index} className="flex flex-col items-center justify-end w-10 h-full">
+        {entries.map(([date, value], index) => (
+          <div key={index} className="relative flex flex-col items-center justify-end w-10 h-full">
+            
+            {value > 0 && (
+              <div className="absolute -top-5 text-xs font-semibold text-gray-600">
+                {value.toLocaleString()}
+              </div>
+            )}
+
             <div
               className="w-full bg-blue-500 rounded-t-md transition-all duration-300"
               style={{ height: `${(value / maxValue) * 100}%` }}
-              title={`${value.toLocaleString()} words`}
+              title={`${value.toLocaleString()} words on ${new Date(date).toLocaleDateString()}`}
             ></div>
-            <p className="text-xs mt-2">{labels[index]}</p>
+            <p className="text-xs mt-2">
+              {new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}
+            </p>
           </div>
         ))}
       </div>
