@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import apiClient from '../apiClient';
-import { SparklesIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import type { Story } from '../types';
 import { useNavigate } from 'react-router-dom';
 
@@ -59,8 +59,23 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
           onClick={handleGenerate}
           disabled={isLoading}
         >
-          <SparklesIcon className="h-5 w-5 mr-2" />
-          {isLoading ? 'Generating...' : 'Generate Story'}
+          {/* <SparklesIcon className="h-5 w-5 mr-2" />
+          {isLoading ? 'Generating...' : 'Generate Story'} */}
+          {isLoading ? (
+            // --- ローディング中の表示 ---
+            <>
+              {/* ↓↓↓↓↓↓ LoaderCircle を ArrowPathIcon に置き換え ↓↓↓↓↓↓ */}
+              <ArrowPathIcon className="h-5 w-5 mr-3 animate-spin" />
+              {/* ↑↑↑↑↑↑ --------------------------------------------- ↑↑↑↑↑↑ */}
+              <span>Generating...</span>
+            </>
+          ) : (
+            // --- 通常時の表示 (変更なし) ---
+            <>
+              <SparklesIcon className="h-5 w-5 mr-2" />
+              <span>Generate Story</span>
+            </>
+          )}
         </button>
       </div>
 

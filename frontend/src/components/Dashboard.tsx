@@ -11,6 +11,8 @@ interface StoriesResponse {
   total_pages: number;
 }
 
+const storiesPerPage = 5;
+
 const Dashboard: React.FC = () => {
   const { logout } = useAuth();
 
@@ -25,7 +27,7 @@ const Dashboard: React.FC = () => {
     const fetchStories = async () => {
       setIsLoading(true);
       try {
-        const response = await apiClient.get<StoriesResponse>(`/stories?page=${currentPage}&limit=5`);
+        const response = await apiClient.get<StoriesResponse>(`/stories?page=${currentPage}&limit=${storiesPerPage}`);
         setStories(response.data.stories || []);
         setTotalPages(response.data.total_pages);
       } catch (err) {
