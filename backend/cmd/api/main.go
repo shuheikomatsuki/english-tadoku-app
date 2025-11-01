@@ -51,6 +51,7 @@ func main() {
 	stories.GET("/:id", storyHandler.GetStory)
 	stories.DELETE("/:id", storyHandler.DeleteStory)
 	stories.PATCH("/:id", storyHandler.UpdateStory)
+	stories.POST("/:id/read", storyHandler.MarkStoryAsRead)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
