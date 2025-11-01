@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
 	// "time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -25,27 +26,33 @@ type IStoryHandler interface {
 	DeleteStory(e echo.Context) error
 	UpdateStory(e echo.Context) error
 	MarkStoryAsRead(e echo.Context) error
+	UndoLastRead(e echo.Context) error
 }
 
 type StoryHandler struct {
-	StoryRepo repository.IStoryRepository
+	StoryRepo  repository.IStoryRepository
 	LLMService service.ILLMService
 }
 
 type GetStoriesResponse struct {
-	Stories     []*model.Story  `json:"stories"`
-	TotalCount  int             `json:"total_count"`
-	TotalPages  int             `json:"total_pages"`
-	CurrentPage int             `json:"current_page"`
+	Stories     []*model.Story `json:"stories"`
+	TotalCount  int            `json:"total_count"`
+	TotalPages  int            `json:"total_pages"`
+	CurrentPage int            `json:"current_page"`
 }
 
 type UpdateStoryRequest struct {
 	Title string `json:"title" validate:"required,min=1,max=100"`
 }
 
+type StoryDetailResponse struct {
+	model.Story
+	ReadCount int `json:"read_count"`
+}
+
 func NewStoryHandler(storyRepo repository.IStoryRepository, llmService service.ILLMService) IStoryHandler {
 	return &StoryHandler{
-		StoryRepo: storyRepo,
+		StoryRepo:  storyRepo,
 		LLMService: llmService,
 	}
 }
@@ -85,9 +92,9 @@ func (h *StoryHandler) GenerateStory(c echo.Context) error {
 	wordCount := len(strings.Fields(content))
 
 	story := &model.Story{
-		UserID: userID,
-		Title: req.Prompt,
-		Content: content,
+		UserID:    userID,
+		Title:     req.Prompt,
+		Content:   content,
 		WordCount: wordCount,
 		// CreatedAt: time.Now(),
 		// UpdatedAt: time.Now(),
@@ -138,9 +145,9 @@ func (h *StoryHandler) GetStories(c echo.Context) error {
 	totalPages := int(math.Ceil(float64(totalCount) / float64(limit)))
 
 	res := GetStoriesResponse{
-		Stories:    stories,
-		TotalCount: totalCount,
-		TotalPages: totalPages,
+		Stories:     stories,
+		TotalCount:  totalCount,
+		TotalPages:  totalPages,
 		CurrentPage: page,
 	}
 
@@ -167,7 +174,17 @@ func (h *StoryHandler) GetStory(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "database error"})
 	}
 
-	return c.JSON(http.StatusOK, story)
+	readCount, err := h.StoryRepo.CountReadingRecords(userID, id)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to get reading count"})
+	}
+
+	res := StoryDetailResponse{
+		Story:     *story,
+		ReadCount: readCount,
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 func (h *StoryHandler) DeleteStory(c echo.Context) error {
@@ -181,7 +198,7 @@ func (h *StoryHandler) DeleteStory(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, "invalid token")
 	}
-	
+
 	story, err := h.StoryRepo.GetUserStory(id, userID)
 	if err != nil {
 		if err == sql.ErrNoRows || err == http.ErrMissingFile {
@@ -210,7 +227,7 @@ func (h *StoryHandler) UpdateStory(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, "invalid token")
 	}
-	
+
 	var req UpdateStoryRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
@@ -257,4 +274,31 @@ func (h *StoryHandler) MarkStoryAsRead(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to create reading record"})
 	}
 	return c.JSON(http.StatusCreated, map[string]string{"message": "Story marked as read successfully"})
+}
+
+func (h *StoryHandler) UndoLastRead(c echo.Context) error {
+	storyID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid story id"})
+	}
+
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, "invalid token")
+	}
+
+	latestRecord, err := h.StoryRepo.GetLatestReadingRecord(userID, storyID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": "No reading record found to undo."})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "database error"})
+	}
+
+	err = h.StoryRepo.DeleteReadingRecord(latestRecord.ID, userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to delete reading record"})
+	}
+
+	return c.JSON(http.StatusNoContent, nil)
 }

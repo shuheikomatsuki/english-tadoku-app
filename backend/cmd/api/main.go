@@ -56,6 +56,7 @@ func main() {
 	stories.DELETE("/:id", storyHandler.DeleteStory)
 	stories.PATCH("/:id", storyHandler.UpdateStory)
 	stories.POST("/:id/read", storyHandler.MarkStoryAsRead)
+	stories.DELETE("/:id/read/latest", storyHandler.UndoLastRead)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }

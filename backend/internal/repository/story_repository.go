@@ -15,6 +15,9 @@ type IStoryRepository interface {
 	DeleteStory(storyID int) error
 	UpdateStoryTitle(storyID int, userID int, newTitle string) (*model.Story, error)
 	CreateReadingRecord(userID, stortyID, WordCount int) error
+	CountReadingRecords(userID, storyID int) (int, error)
+	GetLatestReadingRecord(userID, storyID int) (*model.ReadingRecord, error)
+	DeleteReadingRecord(recordID int, userID int) error
 }
 
 type sqlxStoryRepository struct {
@@ -113,6 +116,40 @@ func (r *sqlxStoryRepository) CreateReadingRecord(userID, storyID, wordCount int
 	_, err := r.DB.Exec(query, userID, storyID, wordCount)
 	if err != nil {
 		return fmt.Errorf("failed to create reading record: %w", err)
+	}
+	return nil
+}
+
+func (r *sqlxStoryRepository) CountReadingRecords(userID, storyID int) (int, error) {
+	var count int
+	query := `SELECT COUNT(*) FROM reading_records WHERE user_id = $1 AND story_id = $2`
+	err := r.DB.Get(&count, query, userID, storyID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count reading records: %w", err)
+	}
+	return count, nil
+}
+
+func (r *sqlxStoryRepository) GetLatestReadingRecord(userID, storyID int) (*model.ReadingRecord, error) {
+	var record model.ReadingRecord
+	query := `
+		SELECT * FROM reading_records
+		WHERE user_id = $1 AND story_id = $2
+		ORDER BY read_at DESC
+		LIMIT 1
+	`
+	err := r.DB.Get(&record, query, userID, storyID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest reading record: %w", err)
+	}
+	return &record, nil
+}
+
+func (r *sqlxStoryRepository) DeleteReadingRecord(recordID int, userID int) error {
+	query := `DELETE FROM reading_records WHERE id = $1 AND user_id = $2`
+	_, err := r.DB.Exec(query, recordID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete reading record: %w", err)
 	}
 	return nil
 }

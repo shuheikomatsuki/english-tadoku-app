@@ -71,6 +71,24 @@ func (m *MockStoryRepository) CreateReadingRecord(userID, storyID, wordCount int
 	return args.Error(0)
 }
 
+func (m *MockStoryRepository) CountReadingRecords(userID, storyID int) (int, error)  {
+	args := m.Called(userID, storyID)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *MockStoryRepository) GetLatestReadingRecord(userID, storyID int) (*model.ReadingRecord, error) {
+	args := m.Called(userID, storyID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.ReadingRecord), args.Error(1)
+}
+
+func (m *MockStoryRepository) DeleteReadingRecord(recordID int, userID int) error {
+	args := m.Called(recordID, userID)
+	return args.Error(0)
+}
+
 type MockLLMService struct {
 	mock.Mock
 }
@@ -112,7 +130,10 @@ func TestStoryHandler_GetStory(t *testing.T) {
 
 	t.Run("success: should return a story", func(t *testing.T) {
 		expectedStory := newTestStory(testStoryID, testUserID)
+		expectedReadCount := 5
+
 		mockRepo.On("GetUserStory", testStoryID, testUserID).Return(expectedStory, nil).Once()
+		mockRepo.On("CountReadingRecords", testUserID, testStoryID).Return(expectedReadCount, nil).Once()
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rec := httptest.NewRecorder()
@@ -125,10 +146,10 @@ func TestStoryHandler_GetStory(t *testing.T) {
 		require.NoError(t, h.GetStory(c))
 		assert.Equal(t, http.StatusOK, rec.Code)
 
-		var receivedStory model.Story
-		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &receivedStory))
-		assert.Equal(t, expectedStory.Title, receivedStory.Title)
-		assert.Equal(t, expectedStory.Content, receivedStory.Content)
+		var receivedResponse StoryDetailResponse
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &receivedResponse))
+		assert.Equal(t, expectedStory.Title, receivedResponse.Story.Title)
+		assert.Equal(t, expectedReadCount, receivedResponse.ReadCount)
 
 		mockRepo.AssertExpectations(t)
 	})
