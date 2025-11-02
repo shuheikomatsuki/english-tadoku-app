@@ -16,7 +16,10 @@ func TestReadingRecordRepository(t *testing.T) {
 	story1 := createTestStory(t, db, user1.ID, "Story 1", 100)
 	story2 := createTestStory(t, db, user1.ID, "Story 2", 200)
 
-	now := time.Now().Truncate(24 * time.Hour)
+	// now := time.Now().Truncate(24 * time.Hour)
+	baseTime := time.Now()
+	now := time.Date(baseTime.Year(), baseTime.Month(), baseTime.Day(), 0, 0, 0, 0, baseTime.Location())
+
 	todayRecord1 := createTestReadingRecord(t, db, user1.ID, story1.ID, 100, now.Add(1 * time.Hour))
 	todayRecord2 := createTestReadingRecord(t, db, user1.ID, story2.ID, 200, now.Add(2 * time.Hour))
 
@@ -72,7 +75,8 @@ func TestReadingRecordRepository(t *testing.T) {
 		require.NoError(t, err)
 
 		// 削除されたか確認
-		_, err = repo.GetLatestReadingRecord(todayRecord2.ID, user1.ID)
+		// _, err = repo.GetLatestReadingRecord(todayRecord2.ID, user1.ID)
+		_, err = repo.GetLatestReadingRecord(user1.ID, story2.ID)
 		assert.Error(t, err, "should be no rows after delete")
 
 		// 他のユーザーの記録は削除できない

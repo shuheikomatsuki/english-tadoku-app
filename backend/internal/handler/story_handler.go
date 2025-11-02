@@ -69,6 +69,9 @@ func (h *StoryHandler) GenerateStory(c echo.Context) error {
 
 	story, err := h.StoryService.GenerateStory(userID, req.Prompt)
 	if err != nil {
+		if errors.Is(err, service.ErrGenerationLimitExceeded) {
+			return c.JSON(http.StatusTooManyRequests, map[string]string{"error": "You have reached your daily story generation limit."})
+		}
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to generate story content"})
 	}
 
