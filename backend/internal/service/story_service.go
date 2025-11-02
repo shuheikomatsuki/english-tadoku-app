@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	dailyGenerationLimit = 5
+	dailyGenerationLimit = 1
 )
 
 // PaginatedStories はサービス層が返すページネーション結果のモデル
@@ -74,16 +74,12 @@ func (s *StoryService) GenerateStory(userID int, prompt string) (*model.Story, e
 	}
 
 	now := time.Now()
-	// 日本時間(JST)の「今日」の始まりを取得 (UTC+9)
-	// (注: サーバーのタイムゾーン設定に依存しないよう JST を明記)
-	jst, _ := time.LoadLocation("Asia/Tokyo")
-	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, jst)
+	todayStart := time.Date(now.UTC().Year(), now.UTC().Month(), now.UTC().Day(), 0, 0, 0, 0, time.UTC)
 
 	currentCount := user.GenerationCount
 	lastGen := user.LastGenerationAt
 
-	// lastGen が nil でない、かつ、JSTで今日より前
-	if lastGen != nil && lastGen.In(jst).Before(todayStart) {
+	if lastGen != nil && lastGen.UTC().Before(todayStart) {
 		currentCount = 0
 	}
 
