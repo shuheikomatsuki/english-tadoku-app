@@ -116,7 +116,7 @@ func (m *MockReadingRecordRepository) GetUserTotalWordCount(userID int) (int, er
 }
 
 func (m *MockReadingRecordRepository) GetWordCountInDateRange(userID int, start, end time.Time) (int, error) {
-	// time.Time は mock.Anything を使うことが多い。ってAIが言ってた
+	// time.Time は mock.Anything を使うことが多いらしい
 	args := m.Called(userID, start, end)
 	// mock.Anything を使う場合
 	// args := m.Called(userID, mock.Anything, mock.Anything)
