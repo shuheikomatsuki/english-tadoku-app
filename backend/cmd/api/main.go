@@ -45,7 +45,7 @@ func main() {
 	}
 	authService := service.NewAuthService(userRepo)
 	userService := service.NewUserService(readingRecordRepo)
-	storyService := service.NewStoryService(storyRepo, readingRecordRepo, userRepo, llmService)
+	storyService := service.NewStoryService(storyRepo, readingRecordRepo, llmService)
 
 	// Handler層
 	authHandler := handler.NewAuthHandler(authService, userService)

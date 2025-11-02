@@ -4,17 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"strings"
-	"time"
 
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/model"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
-)
-
-const (
-	dailyGenerationLimit = 5
 )
 
 // PaginatedStories はサービス層が返すページネーション結果のモデル
@@ -33,10 +27,9 @@ type StoryDetail struct {
 
 // サービス層で扱うためのドメインエラーを定義
 var (
-	ErrStoryNotFound           = errors.New("story not found")
-	ErrForbidden               = errors.New("forbidden")
-	ErrNoReadingRecord         = errors.New("no reading record found")
-	ErrGenerationLimitExceeded = errors.New("generation limit exceeded")
+	ErrStoryNotFound   = errors.New("story not found")
+	ErrForbidden       = errors.New("forbidden")
+	ErrNoReadingRecord = errors.New("no reading record found")
 )
 
 type IStoryService interface {
@@ -52,45 +45,18 @@ type IStoryService interface {
 type StoryService struct {
 	StoryRepo         repository.IStoryRepository
 	ReadingRecordRepo repository.IReadingRecordRepository
-	UserRepo          repository.IUserRepository
 	LLMService        ILLMService // llm_service.go に依存
 }
 
-func NewStoryService(storyRepo repository.IStoryRepository, readingRecordRepo repository.IReadingRecordRepository, userRepo repository.IUserRepository, llmService ILLMService) IStoryService {
+func NewStoryService(storyRepo repository.IStoryRepository, readingRecordRepo repository.IReadingRecordRepository, llmService ILLMService) IStoryService {
 	return &StoryService{
 		StoryRepo:         storyRepo,
 		ReadingRecordRepo: readingRecordRepo,
-		UserRepo:          userRepo,
 		LLMService:        llmService,
 	}
 }
 
 func (s *StoryService) GenerateStory(userID int, prompt string) (*model.Story, error) {
-
-	// ユーザーの生成制限を確認
-	user, err := s.UserRepo.GetUserByID(userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user for validation: %w", err)
-	}
-
-	now := time.Now()
-	// 日本時間(JST)の「今日」の始まりを取得 (UTC+9)
-	// (注: サーバーのタイムゾーン設定に依存しないよう JST を明記)
-	jst, _ := time.LoadLocation("Asia/Tokyo")
-	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, jst)
-
-	currentCount := user.GenerationCount
-	lastGen := user.LastGenerationAt
-
-	// lastGen が nil でない、かつ、JSTで今日より前
-	if lastGen != nil && lastGen.In(jst).Before(todayStart) {
-		currentCount = 0
-	}
-
-	if currentCount >= dailyGenerationLimit {
-		return nil, ErrGenerationLimitExceeded
-	}
-
 	// LLMサービス呼び出し
 	content, err := s.LLMService.GenerateStory(prompt)
 	if err != nil {
@@ -109,11 +75,6 @@ func (s *StoryService) GenerateStory(userID int, prompt string) (*model.Story, e
 	// DB保存
 	if err := s.StoryRepo.CreateStory(story); err != nil {
 		return nil, fmt.Errorf("failed to save story: %w", err)
-	}
-
-	newCount := currentCount + 1
-	if err := s.UserRepo.UpdateGenerationStatus(userID, newCount, now); err != nil {
-		log.Printf("WARNING: failed to update generation status for user %d: %v", userID, err)
 	}
 
 	return story, nil
