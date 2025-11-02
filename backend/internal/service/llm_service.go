@@ -26,7 +26,7 @@ func countWords(text string) int {
 func NewLLMService(apiKey string) ILLMService {
 	if apiKey == "" {
 		fmt.Println("WARNING: GEMINI_API_KEY is not set. Using mock implementation.")
-		return &MockLLMService{}
+		return &LLMService{}
 	}
 
 	ctx := context.Background()
@@ -36,7 +36,7 @@ func NewLLMService(apiKey string) ILLMService {
 	})
 	if err != nil {
 		fmt.Printf("WARNING: failed to create Gemini client: %v\nUsing mock implementation.\n", err)
-		return &MockLLMService{}
+		return &LLMService{}
 	}
 
 	return &LLMService{
@@ -75,8 +75,8 @@ func (s *LLMService) GenerateStory(prompt string) (string, error) {
 	return text, nil
 }
 
-type MockLLMService struct{}
+// type MockLLMService struct{}
 
-func (s *MockLLMService) GenerateStory(prompt string) (string, error) {
-	return fmt.Sprintf("This is a mock story generated for the prompt: '%s'.", prompt), nil
-}
+// func (s *MockLLMService) GenerateStory(prompt string) (string, error) {
+// 	return fmt.Sprintf("This is a mock story generated for the prompt: '%s'.", prompt), nil
+// }
