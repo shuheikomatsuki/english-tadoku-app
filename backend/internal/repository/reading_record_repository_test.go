@@ -21,7 +21,7 @@ func TestReadingRecordRepository(t *testing.T) {
 	todayRecord2 := createTestReadingRecord(t, db, user1.ID, story2.ID, 200, now.Add(2 * time.Hour))
 
 	yesterdayRecord := createTestReadingRecord(t, db, user1.ID, story1.ID, 100, now.Add(-10 * time.Hour))
-	twoDaysAgoRecord := createTestReadingRecord(t, db, user1.ID, story1.ID, 100, now.Add(-54 * time.Hour))
+	twoDaysAgoRecord := createTestReadingRecord(t, db, user1.ID, story1.ID, 100, now.Add(-30 * time.Hour))
 
 	if yesterdayRecord == nil || twoDaysAgoRecord == nil {}
 
