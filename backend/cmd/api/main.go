@@ -39,7 +39,10 @@ func main() {
 	readingRecordRepo := repository.NewReadingRecordRepository(db)
 
 	// Service層
-	llmService := service.NewLLMService(os.Getenv("GEMINI_API_KEY"))
+	llmService, err := service.NewLLMService(os.Getenv("GEMINI_API_KEY"))
+	if err != nil {
+		e.Logger.Fatal("Failed to init LLMService:", err)
+	}
 	authService := service.NewAuthService(userRepo)
 	userService := service.NewUserService(readingRecordRepo)
 	storyService := service.NewStoryService(storyRepo, readingRecordRepo, llmService)
