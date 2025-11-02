@@ -151,6 +151,29 @@ func TestStoryHandler_GenerateStory(t *testing.T) {
 
 		mockStoryService.AssertExpectations(t)
 	})
+
+	t.Run("faile: should return 429 Too Many Requests if limit exceeded", func(t *testing.T) {
+		prompt := "A story that should fail"
+		requestBody := fmt.Sprintf(`{"prompt": "%s"}`, prompt)
+
+		mockStoryService.On("GenerateStory", testUserID, prompt).Return(nil, service.ErrGenerationLimitExceeded).Once()
+
+		req := httptest.NewRequest(http.MethodPost, "/stories", strings.NewReader(requestBody))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.Set("user", token)
+
+		require.NoError(t, h.GenerateStory(c))
+
+		assert.Equal(t, http.StatusTooManyRequests, rec.Code)
+
+		var responseBody map[string]string
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &responseBody))
+		assert.Contains(t, responseBody["error"], "daily story generation limit")
+
+		mockStoryService.AssertExpectations(t)
+	})
 }
 
 func TestStoryHandler_DeleteStory(t *testing.T) {
