@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -14,6 +15,8 @@ var ErrEmailAlreadyExists = errors.New("email already exists")
 type IUserRepository interface {
 	CreateUser(user *model.User) error
 	FindUserByEmail(email string) (*model.User, error)
+	GetUserByID(userID int) (*model.User, error)
+	UpdateGenerationStatus(userID int, newCount int, newDate time.Time) error
 }
 
 type sqlxUserRepository struct {
@@ -50,4 +53,27 @@ func (r *sqlxUserRepository) FindUserByEmail(email string) (*model.User, error) 
 		return nil, fmt.Errorf("failed to find user by email: %w", err)
 	}
 	return &user, nil
+}
+
+func (r *sqlxUserRepository) GetUserByID(userID int) (*model.User, error) {
+	var user model.User
+	query := `SELECT * FROM users WHERE id = $1`
+	err := r.DB.Get(&user, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find user by id %w", err)
+	}
+	return &user, nil
+}
+
+func (r *sqlxUserRepository) UpdateGenerationStatus(userID, newCount int, newDate time.Time) error {
+	query := `
+		UPDATE users
+		SET generation_count = $1, last_generation_at = $2, updated_at = NOW()
+		WHERE id = $3
+	`
+	_, err := r.DB.Exec(query, newCount, newDate, userID)
+	if err != nil {
+		return fmt.Errorf("failed to update generation status: %w", err)
+	}
+	return nil
 }

@@ -21,8 +21,20 @@ func (m *MockUserRepository) FindUserByEmail(email string) (*model.User, error) 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-
 	return args.Get(0).(*model.User), args.Error(1)
+}
+
+func (m *MockUserRepository) GetUserByID(userID int) (*model.User, error) {
+	args := m.Called(userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.User), args.Error(1)
+}
+
+func (m *MockUserRepository) UpdateGenerationStatus(userID int, newCount int, newDate time.Time) error {
+	args := m.Called(userID, newCount, newDate)
+	return args.Error(0)
 }
 
 type MockStoryRepository struct {
