@@ -21,7 +21,6 @@ type IUserService interface {
 }
 
 type UserService struct {
-	// UserRepo repository.IUserRepository
 	ReadingRecordRepo repository.IReadingRecordRepository
 }
 
