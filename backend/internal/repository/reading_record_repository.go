@@ -17,7 +17,7 @@ type IReadingRecordRepository interface {
 
 	GetUserTotalWordCount(userID int) (int, error)
 	GetWordCountInDateRange(userID int, start, end time.Time) (int, error)
-	GetDailyWordCountLastNDays(userID, days int) (map[string]int, error)
+	GetDailyWordCountLastNDays(userID, days int, anchorTime time.Time) (map[string]int, error)
 }
 
 type sqlxReadingRecordRepository struct {
@@ -27,8 +27,6 @@ type sqlxReadingRecordRepository struct {
 func NewReadingRecordRepository(db *sqlx.DB) IReadingRecordRepository {
 	return &sqlxReadingRecordRepository{DB: db}
 }
-
-// --- StoryRepository から移管されたメソッド ---
 
 func (r *sqlxReadingRecordRepository) CreateReadingRecord(userID, storyID, wordCount int) error {
 	query := `
@@ -104,9 +102,11 @@ func (r *sqlxReadingRecordRepository) GetWordCountInDateRange(userID int, start,
 	return total, nil
 }
 
-func (r *sqlxReadingRecordRepository) GetDailyWordCountLastNDays(userID, days int) (map[string]int, error) {
+func (r *sqlxReadingRecordRepository) GetDailyWordCountLastNDays(userID, days int, anchorTime time.Time) (map[string]int, error) {
 	result := make(map[string]int)
-	now := time.Now()
+
+	now := anchorTime
+	
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
 	for i := 0; i < days; i++ {

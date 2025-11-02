@@ -14,10 +14,6 @@ var ErrEmailAlreadyExists = errors.New("email already exists")
 type IUserRepository interface {
 	CreateUser(user *model.User) error
 	FindUserByEmail(email string) (*model.User, error)
-	// --- 以下のメソッドを削除 ---
-	// GetUserTotalWordCount(userID int) (int, error)
-	// GetWordCountInDateRange(userID int, start, end time.Time) (int, error)
-	// GetDailyWordCountLastNDays(userID, days int) (map[string]int, error)
 }
 
 type sqlxUserRepository struct {

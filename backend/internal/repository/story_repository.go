@@ -14,11 +14,6 @@ type IStoryRepository interface {
 	GetUserStory(storyID int, userID int) (*model.Story, error)
 	DeleteStory(storyID int) error
 	UpdateStoryTitle(storyID int, userID int, newTitle string) (*model.Story, error)
-	// --- 以下のメソッドを削除 ---
-	// CreateReadingRecord(userID, stortyID, WordCount int) error
-	// CountReadingRecords(userID, storyID int) (int, error)
-	// GetLatestReadingRecord(userID, storyID int) (*model.ReadingRecord, error)
-	// DeleteReadingRecord(recordID int, userID int) error
 }
 
 type sqlxStoryRepository struct {

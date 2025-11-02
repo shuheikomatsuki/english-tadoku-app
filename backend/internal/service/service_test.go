@@ -111,8 +111,8 @@ func (m *MockReadingRecordRepository) GetWordCountInDateRange(userID int, start,
 	return args.Int(0), args.Error(1)
 }
 
-func (m *MockReadingRecordRepository) GetDailyWordCountLastNDays(userID, days int) (map[string]int, error) {
-	args := m.Called(userID, days)
+func (m *MockReadingRecordRepository) GetDailyWordCountLastNDays(userID, days int, anchorTime time.Time) (map[string]int, error) {
+	args := m.Called(userID, days, anchorTime)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

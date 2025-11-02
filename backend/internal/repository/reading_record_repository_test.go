@@ -112,7 +112,7 @@ func TestReadingRecordRepository(t *testing.T) {
 	})
 
 	t.Run("GetDailyWordCountLastNDays", func(t *testing.T) {
-		result, err := repo.GetDailyWordCountLastNDays(user1.ID, 3)
+		result, err := repo.GetDailyWordCountLastNDays(user1.ID, 3, now)
 		require.NoError(t, err)
 
 		todayKey := now.Format("2006-01-02")

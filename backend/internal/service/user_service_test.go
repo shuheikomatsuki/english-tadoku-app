@@ -28,8 +28,10 @@ func TestUserService_GetUserStats(t *testing.T) {
 			Once()
 
 		mockReadingRepo.On("GetUserTotalWordCount", testUser.ID).Return(50000, nil).Once()
-		mockLast7Days := map[string]int{time.Now().Format("2006-01-02"): 100}
-		mockReadingRepo.On("GetDailyWordCountLastNDays", testUser.ID, 7).Return(mockLast7Days, nil).Once()
+		now := time.Now()
+		todayKey := now.Format("2006-01-02")
+		mockLast7Days := map[string]int{todayKey: 100}
+		mockReadingRepo.On("GetDailyWordCountLastNDays", testUser.ID, 7, mock.AnythingOfType("time.Time")).Return(mockLast7Days, nil).Once()
 
 		stats, err := userService.GetUserStats(testUser.ID)
 
@@ -39,7 +41,7 @@ func TestUserService_GetUserStats(t *testing.T) {
 		assert.Equal(t, 3000, stats.MonthlyWordCount)
 		assert.Equal(t, 10000, stats.YearlyWordCount)
 		assert.Equal(t, 50000, stats.TotalWordCount)
-		assert.Equal(t, 100, stats.Last7DaysWordCount[time.Now().Format("2006-01-02")])
+		assert.Equal(t, 100, stats.Last7DaysWordCount[todayKey])
 		
 		mockReadingRepo.AssertExpectations(t)
 	})

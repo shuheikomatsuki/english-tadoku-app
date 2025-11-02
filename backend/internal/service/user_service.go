@@ -68,7 +68,7 @@ func (s *UserService) GetUserStats(userID int) (*UserStats, error) {
 		return nil, fmt.Errorf("failed to get user stats (total): %w", err)
 	}
 
-	last7DaysCount, err := s.ReadingRecordRepo.GetDailyWordCountLastNDays(userID, 7)
+	last7DaysCount, err := s.ReadingRecordRepo.GetDailyWordCountLastNDays(userID, 7, now)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user stats (last7days): %w", err)
 	}
