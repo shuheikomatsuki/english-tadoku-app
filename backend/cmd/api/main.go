@@ -31,12 +31,22 @@ func main() {
 		e.Logger.Fatal("Failed to connect to database:", err)
 	}
 
-	// 依存関係を注入（DB）
+	// --- 依存関係の注入 ---
+
+	// Repository層
 	userRepo := repository.NewUserRepository(db)
 	storyRepo := repository.NewStoryRepository(db)
+	readingRecordRepo := repository.NewReadingRecordRepository(db)
+
+	// Service層
 	llmService := service.NewLLMService(os.Getenv("GEMINI_API_KEY"))
-	authHandler := handler.NewAuthHandler(userRepo)
-	storyHandler := handler.NewStoryHandler(storyRepo, llmService)
+	authService := service.NewAuthService(userRepo)
+	userService := service.NewUserService(readingRecordRepo)
+	storyService := service.NewStoryService(storyRepo, readingRecordRepo, llmService)
+
+	// Handler層
+	authHandler := handler.NewAuthHandler(authService, userService)
+	storyHandler := handler.NewStoryHandler(storyService)
 
 	// ルーティング設定
 	api := e.Group("/api/v1")
