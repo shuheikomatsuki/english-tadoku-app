@@ -3,6 +3,7 @@ import apiClient from '../apiClient';
 import { SparklesIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import type { Story } from '../types';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 
 interface StoryGeneratorProps {
@@ -34,7 +35,15 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
       setPrompt('');
       navigate(`/stories/${newStory.id}`);
     } catch (err) {
-      setError('Failed to generate story. Please try again.');
+      if (axios.isAxiosError(err) && err.response) {
+        if (err.response.status === 429) {
+          setError('You have reached your daily story generation limit. Please try again tomorrow.');
+        } else {
+          setError('Failed to generate story. Please try again.');
+        }
+      } else {
+        setError('An unexpected error occurred.');
+      }
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -59,14 +68,10 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
           onClick={handleGenerate}
           disabled={isLoading}
         >
-          {/* <SparklesIcon className="h-5 w-5 mr-2" />
-          {isLoading ? 'Generating...' : 'Generate Story'} */}
           {isLoading ? (
             // --- ローディング中の表示 ---
             <>
-              {/* ↓↓↓↓↓↓ LoaderCircle を ArrowPathIcon に置き換え ↓↓↓↓↓↓ */}
               <ArrowPathIcon className="h-5 w-5 mr-3 animate-spin" />
-              {/* ↑↑↑↑↑↑ --------------------------------------------- ↑↑↑↑↑↑ */}
               <span>Generating...</span>
             </>
           ) : (
@@ -85,14 +90,6 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
           <span className="">{error}</span>
         </div>
       )}
-      
-      {/* --- 生成されたストーリー表示 --- */}
-      {/* {generatedStory && (
-        <div className="bg-white p-6 rounded-lg shadow-md animate-fade-in">
-          <h3 className="text-lg font-bold p-2">{generatedStory.title}</h3>
-          <p className="whitespace-pre-wrap p-2">{generatedStory.content}</p>
-        </div>
-      )} */}
 
     </div>
   );
