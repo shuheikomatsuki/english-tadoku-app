@@ -40,6 +40,14 @@ func (m *MockUserService) GetUserStats(userID int) (*service.UserStats, error) {
 	return args.Get(0).(*service.UserStats), args.Error(1)
 }
 
+func (m *MockUserService) GetGenerationStatus(userID int) (*service.GenerationStatus, error) {
+	args := m.Called(userID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*service.GenerationStatus), args.Error(1)
+}
+
 type MockStoryService struct {
 	mock.Mock
 }

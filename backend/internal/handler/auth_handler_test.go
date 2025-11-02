@@ -148,7 +148,7 @@ func TestAuthHandler_GetUserStats(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/me/stats", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
-		c.Set("user", token) 
+		c.Set("user", token)
 
 		err := h.GetUserStats(c)
 
@@ -162,5 +162,42 @@ func TestAuthHandler_GetUserStats(t *testing.T) {
 		assert.Equal(t, expectedStats.Last7DaysWordCount[time.Now().Format("2006-01-02")], response.Last7DaysWordCount[time.Now().Format("2006-01-02")])
 
 		mockUserSvc.AssertExpectations(t)
+	})
+}
+
+func TestAuthHandler_GetGenetationStatus(t *testing.T) {
+	mockAuthService, mockUserService, e := setupAuthTestHandler(t)
+	h := NewAuthHandler(mockAuthService, mockUserService)
+
+	claims := &JwtCustomClaims{
+		testUserID,
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1))},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	t.Run("success: should return user stats", func(t *testing.T) {
+		expectedStatus := &service.GenerationStatus{
+			CurrentCount: 2,
+			Limit:        5,
+		}
+
+		mockUserService.On("GetGenerationStatus", testUserID).Return(expectedStatus, nil).Once()
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/me/generation-status", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.Set("user", token)
+
+		err := h.GetGenerationStatus(c)
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, rec.Code)
+
+		var response service.GenerationStatus
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
+		assert.Equal(t, expectedStatus.CurrentCount, response.CurrentCount)
+		assert.Equal(t, expectedStatus.Limit, response.Limit)
+
+		mockUserService.AssertExpectations(t)
 	})
 }

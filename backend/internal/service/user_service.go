@@ -7,6 +7,10 @@ import (
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
 )
 
+const (
+	dailyGenerationLimit = 5
+)
+
 type UserStats struct {
 	TotalWordCount     int
 	TodayWordCount     int
@@ -16,17 +20,25 @@ type UserStats struct {
 	Last7DaysWordCount map[string]int
 }
 
+type GenerationStatus struct {
+	CurrentCount int `json:"current_count"`
+	Limit        int `json:"limit"`
+}
+
 type IUserService interface {
 	GetUserStats(userID int) (*UserStats, error)
+	GetGenerationStatus(userID int) (*GenerationStatus, error)
 }
 
 type UserService struct {
 	ReadingRecordRepo repository.IReadingRecordRepository
+	UserRepo          repository.IUserRepository
 }
 
-func NewUserService(readingRecordRepo repository.IReadingRecordRepository) IUserService {
+func NewUserService(readingRecordRepo repository.IReadingRecordRepository, userRepo repository.IUserRepository) IUserService {
 	return &UserService{
 		ReadingRecordRepo: readingRecordRepo,
+		UserRepo:          userRepo,
 	}
 }
 
@@ -86,4 +98,30 @@ func (s *UserService) GetUserStats(userID int) (*UserStats, error) {
 	}
 
 	return stats, nil
+}
+
+func (s *UserService) GetGenerationStatus(userID int) (*GenerationStatus, error) {
+	user, err := s.UserRepo.GetUserByID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	now := time.Now()
+	todayStart := time.Date(now.UTC().Year(), now.UTC().Month(), now.UTC().Day(), 0, 0, 0, 0, time.UTC)
+
+	currentCount := user.GenerationCount
+	lastGen := user.LastGenerationAt
+
+	if lastGen != nil && lastGen.UTC().Before(todayStart) {
+		currentCount = 0
+	}
+
+	// const dailyLimit = 5 
+
+	status := &GenerationStatus{
+		CurrentCount: currentCount,
+		Limit:        dailyGenerationLimit,
+	}
+
+	return status, nil
 }

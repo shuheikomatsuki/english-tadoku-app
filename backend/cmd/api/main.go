@@ -44,7 +44,7 @@ func main() {
 		e.Logger.Fatal("Failed to init LLMService:", err)
 	}
 	authService := service.NewAuthService(userRepo)
-	userService := service.NewUserService(readingRecordRepo)
+	userService := service.NewUserService(readingRecordRepo, userRepo)
 	storyService := service.NewStoryService(storyRepo, readingRecordRepo, userRepo, llmService)
 
 	// Handler層
@@ -59,6 +59,7 @@ func main() {
 	userRoutes := api.Group("/users")
 	userRoutes.Use(authMiddleware.JWTAuthMiddleware)
 	userRoutes.GET("/me/stats", authHandler.GetUserStats)
+	userRoutes.GET("/me/generation-status", authHandler.GetGenerationStatus)
 	
 	// 認証が必要なグループ
 	stories := api.Group("/stories")

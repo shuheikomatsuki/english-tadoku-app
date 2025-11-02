@@ -111,6 +111,7 @@ const StoryDetail: React.FC = () => {
       // 2回目以降はモーダルを開く
       setIsMarkAsReadModalOpen(true);
     }
+    // setIsMarkAsReadModalOpen(true);
   };
 
   const handleUndoReadClick = () => {

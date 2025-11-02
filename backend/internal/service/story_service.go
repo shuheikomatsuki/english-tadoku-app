@@ -13,9 +13,9 @@ import (
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
 )
 
-const (
-	dailyGenerationLimit = 1
-)
+// const (
+// 	dailyGenerationLimit = 1
+// )
 
 // PaginatedStories はサービス層が返すページネーション結果のモデル
 type PaginatedStories struct {
