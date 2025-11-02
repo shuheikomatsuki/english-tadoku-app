@@ -16,8 +16,15 @@ FROM alpine:latest
 
 WORKDIR /app
 
+# COPY --from=builder /app/server .
+
+# EXPOSE 8080
+
+# CMD ["./server"]
+
 COPY --from=builder /app/server .
 
-EXPOSE 8080
+# Renderが環境変数を注入できるように、ENTRYPOINTを使用
+ENTRYPOINT ["./server"]
 
-CMD ["./server"]
+EXPOSE 8080
