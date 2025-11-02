@@ -3,15 +3,12 @@ package handler
 import (
 	"errors"
 	"net/http"
-	"os"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	"golang.org/x/crypto/bcrypt"
 
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/model"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
+	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/service"
 )
 
 type IAuthHandler interface {
@@ -21,12 +18,14 @@ type IAuthHandler interface {
 }
 
 type AuthHandler struct {
-	UserRepo repository.IUserRepository
+	AuthService service.IAuthService
+	UserService service.IUserService
 }
 
-func NewAuthHandler(userRepo repository.IUserRepository) IAuthHandler {
+func NewAuthHandler(authSvc service.IAuthService, userSvc service.IUserService) IAuthHandler {
 	return &AuthHandler{
-		UserRepo: userRepo,
+		AuthService: authSvc,
+		UserService: userSvc,
 	}
 }
 
@@ -54,6 +53,20 @@ type JwtCustomClaims struct {
 	jwt.RegisteredClaims
 }
 
+func getUserIDFromContext(c echo.Context) (int, error) {
+	user, ok := c.Get("user").(*jwt.Token)
+	if !ok {
+		return 0, errors.New("failed to get user from context")
+	}
+
+	claims, ok := user.Claims.(*JwtCustomClaims)
+	if !ok {
+		return 0, errors.New("failed to get claims from token")
+	}
+
+	return claims.UserID, nil
+}
+
 func (h *AuthHandler) SignUp(c echo.Context) error {
 	var req SignUpRequest
 	if err := c.Bind(&req); err != nil {
@@ -64,18 +77,8 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 		return err
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	err := h.AuthService.SignUp(req.Email, req.Password)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "failed to hash password")
-	}
-
-	user := &model.User{
-		Email:        req.Email,
-		PasswordHash: string(hashedPassword),
-	}
-
-	if err := h.UserRepo.CreateUser(user); err != nil {
-		// TODO: email が重複した際のエラーハンドリング
 		if errors.Is(err, repository.ErrEmailAlreadyExists) {
 			return c.JSON(http.StatusConflict, map[string]string{"error": "This email address is already registered."})
 		}
@@ -91,26 +94,19 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "invalid request body")
 	}
 
-	user, err := h.UserRepo.FindUserByEmail(req.Email)
+	// (簡易バリデーション)
+	if req.Email == "" || req.Password == "" {
+		return c.JSON(http.StatusUnauthorized, "invalid email or password")
+	}
+
+	// ユーザー検証
+	user, err := h.AuthService.ValidateUser(req.Email, req.Password)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, "invalid email or password")
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, "invalid email or password")
-	}
-
-	claims := &JwtCustomClaims{
-		user.ID,
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	// トークン生成
+	t, err := h.AuthService.GenerateToken(user.ID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "failed to generate token")
 	}
@@ -126,61 +122,19 @@ func (h *AuthHandler) GetUserStats(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, "invalid token")
 	}
 
-	// 各種統計情報を計算
-	now := time.Now()
-
-	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	todayCount, err := h.UserRepo.GetWordCountInDateRange(userID, startOfDay, now.Add(24*time.Hour))
+	stats, err := h.UserService.GetUserStats(userID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to get user stats"})
-	}
-
-	// 週の始まりを月曜日とする
-	weekday := int(now.Weekday())
-	if weekday == 0 {
-		weekday = 7 // 日曜日の場合は7に調整
-	}
-	startOfWeek := startOfDay.AddDate(0, 0, -weekday+1)
-	weeklyCount, err := h.UserRepo.GetWordCountInDateRange(userID, startOfWeek, startOfWeek.AddDate(0, 0, 7))
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to get user stats"})
-	}
-
-	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	monthlyCount, err := h.UserRepo.GetWordCountInDateRange(userID, startOfMonth, startOfMonth.AddDate(0, 1, 0))
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to get user stats"})
-	}
-
-	startOfYear := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location())
-	yearlyCount, err := h.UserRepo.GetWordCountInDateRange(userID, startOfYear, startOfYear.AddDate(1, 0, 0))
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to get user stats"})
-	}
-
-	totalWordCount, err := h.UserRepo.GetUserTotalWordCount(userID)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to get user stats"})
-	}
-
-	last7DaysCount, err := h.UserRepo.GetDailyWordCountLastNDays(userID, 7)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to get user stats"})
-	}
-
-	if last7DaysCount == nil {
-		last7DaysCount = make(map[string]int)
 	}
 
 	// レスポンス生成
-
 	res := UserStatsResponse{
-		TotalWordCount:     totalWordCount,
-		TodayWordCount:     todayCount,
-		WeeklyWordCount:    weeklyCount,
-		MonthlyWordCount:   monthlyCount,
-		YearlyWordCount:    yearlyCount,
-		Last7DaysWordCount: last7DaysCount,
+		TotalWordCount:     stats.TotalWordCount,
+		TodayWordCount:     stats.TodayWordCount,
+		WeeklyWordCount:    stats.WeeklyWordCount,
+		MonthlyWordCount:   stats.MonthlyWordCount,
+		YearlyWordCount:    stats.YearlyWordCount,
+		Last7DaysWordCount: stats.Last7DaysWordCount,
 	}
 
 	return c.JSON(http.StatusOK, res)
