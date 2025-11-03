@@ -37,7 +37,7 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 			default:
 				errorMessage = fmt.Sprintf("validation failed on field %s with rule %s", fieldError.Field(), fieldError.Tag())
 			}
-			break
+			// break
 		}
 
 		return echo.NewHTTPError(http.StatusBadRequest, ValidationErrorResponse{Error: errorMessage})

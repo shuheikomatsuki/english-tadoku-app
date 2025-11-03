@@ -16,11 +16,6 @@ import (
 
 func main() {
 	e := echo.New()
-	
-	// e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-	// 	AllowOrigins: []string{"http://localhost:5173", "http://127.0.0.1:5173"},
-	// 	AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
-	// }))
 
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
