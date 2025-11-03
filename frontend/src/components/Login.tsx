@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import apiClient from '../apiClient';
 import { Eye, EyeOff } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext'; 
+import { useAuth } from '../contexts/AuthContext';
 
-const Login: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+interface LoginProps {
+  defaultEmail?: string;
+  defaultPassword?: string;
+}
+
+const Login: React.FC<LoginProps> = ({ defaultEmail = '', defaultPassword = '' }) => {
+  const [email, setEmail] = useState(defaultEmail);
+  const [password, setPassword] = useState(defaultPassword);
   const [message, setMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
@@ -19,9 +24,6 @@ const Login: React.FC = () => {
       const token = response.data.token;
 
       login(token);
-
-      // setMessage('Login successful!');
-      // console.log('Received token: ', token);
 
       setEmail('');
       setPassword('');
