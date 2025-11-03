@@ -1,5 +1,5 @@
 import React, {useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext';
 import StoryGenerator from './StoryGenerator';
 import StoryList from './StoryList';
 import apiClient from '../apiClient';
@@ -14,7 +14,7 @@ interface StoriesResponse {
 const storiesPerPage = 5;
 
 const Dashboard: React.FC = () => {
-  const { logout } = useAuth();
+  // const { logout } = useAuth();
 
   const [stories, setStories] = useState<Story[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
