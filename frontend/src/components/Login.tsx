@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import apiClient from '../apiClient';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface LoginProps {
@@ -14,10 +14,13 @@ const Login: React.FC<LoginProps> = ({ defaultEmail = '', defaultPassword = '' }
   const [message, setMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
+
+    setIsLoading(true);
 
     try {
       const response = await apiClient.post('/login', { email, password });
@@ -31,6 +34,8 @@ const Login: React.FC<LoginProps> = ({ defaultEmail = '', defaultPassword = '' }
     } catch (error) {
       setMessage('Login failed. Please check your email and password');
       console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -50,6 +55,7 @@ const Login: React.FC<LoginProps> = ({ defaultEmail = '', defaultPassword = '' }
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={isLoading}
           />
         </div>
         <div>
@@ -65,6 +71,7 @@ const Login: React.FC<LoginProps> = ({ defaultEmail = '', defaultPassword = '' }
               value={password} 
               onChange={(e) => setPassword(e.target.value)} 
               required 
+              disabled={isLoading}
             />
             <button
               type="button"
@@ -78,6 +85,7 @@ const Login: React.FC<LoginProps> = ({ defaultEmail = '', defaultPassword = '' }
                 cursor: 'pointer',
                 outline: 'none'
               }}
+              disabled={isLoading}
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -91,8 +99,9 @@ const Login: React.FC<LoginProps> = ({ defaultEmail = '', defaultPassword = '' }
               backgroundColor: '#000000',
               color: '#ffffff'
             }}
+            disabled={isLoading}
           >
-            Login
+            {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Login'}
           </button>
         </div>
       </form>
