@@ -4,7 +4,6 @@ import StoryGenerator from './StoryGenerator';
 import StoryList from './StoryList';
 import apiClient from '../apiClient';
 import type { Story } from '../types';
-import { set } from 'date-fns';
 import ConfirmModal from './ConfirmModal';
 
 interface StoriesResponse {
