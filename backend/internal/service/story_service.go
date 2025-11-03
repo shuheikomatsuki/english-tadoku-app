@@ -54,14 +54,16 @@ type StoryService struct {
 	ReadingRecordRepo repository.IReadingRecordRepository
 	UserRepo          repository.IUserRepository
 	LLMService        ILLMService // llm_service.go に依存
+	DailyLimit        int
 }
 
-func NewStoryService(storyRepo repository.IStoryRepository, readingRecordRepo repository.IReadingRecordRepository, userRepo repository.IUserRepository, llmService ILLMService) IStoryService {
+func NewStoryService(storyRepo repository.IStoryRepository, readingRecordRepo repository.IReadingRecordRepository, userRepo repository.IUserRepository, llmService ILLMService, dailyLimit int) IStoryService {
 	return &StoryService{
 		StoryRepo:         storyRepo,
 		ReadingRecordRepo: readingRecordRepo,
 		UserRepo:          userRepo,
 		LLMService:        llmService,
+		DailyLimit:        dailyLimit,
 	}
 }
 
@@ -83,7 +85,7 @@ func (s *StoryService) GenerateStory(userID int, prompt string) (*model.Story, e
 		currentCount = 0
 	}
 
-	if currentCount >= dailyGenerationLimit {
+	if currentCount >= s.DailyLimit {
 		return nil, ErrGenerationLimitExceeded
 	}
 

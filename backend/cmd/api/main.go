@@ -1,8 +1,10 @@
 package main
 
 import (
+	"log"
 	"os"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -16,11 +18,6 @@ import (
 
 func main() {
 	e := echo.New()
-	
-	// e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-	// 	AllowOrigins: []string{"http://localhost:5173", "http://127.0.0.1:5173"},
-	// 	AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
-	// }))
 
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
@@ -54,6 +51,14 @@ func main() {
 		e.Logger.Fatal("Failed to connect to database:", err)
 	}
 
+	limitStr := os.Getenv("DAILY_GENERATION_LIMIT")
+	dailyLimit, err := strconv.Atoi(limitStr)
+	if err != nil || dailyLimit <= 0 {
+		log.Println("Invalid or missing DAILY_GENERATION_LIMIT, using default value (10)")
+		dailyLimit = 10 // デフォルト値
+	}
+	e.Logger.Infof("Daily story generation limit set to %d", dailyLimit)
+
 	// --- 依存関係の注入 ---
 
 	// Repository層
@@ -67,8 +72,8 @@ func main() {
 		e.Logger.Fatal("Failed to init LLMService:", err)
 	}
 	authService := service.NewAuthService(userRepo)
-	userService := service.NewUserService(readingRecordRepo, userRepo)
-	storyService := service.NewStoryService(storyRepo, readingRecordRepo, userRepo, llmService)
+	userService := service.NewUserService(readingRecordRepo, userRepo, dailyLimit)
+	storyService := service.NewStoryService(storyRepo, readingRecordRepo, userRepo, llmService, dailyLimit)
 
 	// Handler層
 	authHandler := handler.NewAuthHandler(authService, userService)
