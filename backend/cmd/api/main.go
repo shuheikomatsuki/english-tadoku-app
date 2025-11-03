@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -16,9 +17,24 @@ import (
 func main() {
 	e := echo.New()
 	
+	// e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+	// 	AllowOrigins: []string{"http://localhost:5173", "http://127.0.0.1:5173"},
+	// 	AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+	// }))
+
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:5173", "http://127.0.0.1:5173"},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+		AllowOrigins: []string{
+			"https://english-tadoku-app-v1.onrender.com", // Render (本番)
+			"http://localhost:5173",                   // Vite開発
+			"http://127.0.0.1:5173",                   // Vite代替
+		},
+		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders: []string{
+			echo.HeaderOrigin,
+			echo.HeaderContentType,
+			echo.HeaderAccept,
+			echo.HeaderAuthorization,
+		},
 	}))
 
 	e.Validator = handler.NewValidator()
@@ -51,6 +67,10 @@ func main() {
 	authHandler := handler.NewAuthHandler(authService, userService)
 	storyHandler := handler.NewStoryHandler(storyService)
 
+	e.GET("/health", func(c echo.Context) error {
+		return c.String(http.StatusOK, "ok")
+	})
+
 	// ルーティング設定
 	api := e.Group("/api/v1")
 	api.POST("/signup", authHandler.SignUp)
@@ -72,5 +92,12 @@ func main() {
 	stories.POST("/:id/read", storyHandler.MarkStoryAsRead)
 	stories.DELETE("/:id/read/latest", storyHandler.UndoLastRead)
 
-	e.Logger.Fatal(e.Start(":8080"))
+	// e.Logger.Fatal(e.Start(":8080"))
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	e.Logger.Fatal(e.Start(":" + port))
 }
