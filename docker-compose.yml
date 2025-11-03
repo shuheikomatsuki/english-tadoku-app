@@ -5,20 +5,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
-    # volumes:
-    #   - ./backend:/app
-    # depends_on:
-    #   - db
     depends_on:
       db:
         condition: service_healthy
-    # environment:
-    #   - DATABASE_HOST=${DB_HOST}
-    #   - DATABASE_USER=${DB_USER}
-    #   - DATABASE_PASSWORD=${DB_PASSWORD}
-    #   - DATABASE_NAME=${DB_NAME}
-    #   - JWT_SECRET=${JWT_SECRET}
-    #   - GEMINI_API_KEY=${GEMINI_API_KEY}
     env_file:
       - .env
 
