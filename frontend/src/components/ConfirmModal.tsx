@@ -1,7 +1,6 @@
 import React, { Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { ExclamationTriangleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
-import { CheckCircle } from 'lucide-react';
 
 interface ConfirmModalProps {
   isOpen: boolean;
