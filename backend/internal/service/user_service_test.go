@@ -9,10 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// テスト用の制限値を定義
+const testDailyLimit = 5
+
 func TestUserService_GetUserStats(t *testing.T) {
 	mockReadingRepo := new(MockReadingRecordRepository)
 	mockUserRepo := new(MockUserRepository)
-	userService := NewUserService(mockReadingRepo, mockUserRepo)
+	userService := NewUserService(mockReadingRepo, mockUserRepo, testDailyLimit)
 
 	t.Run("success: should calculate all stats correctly", func(t *testing.T) {
 		mockReadingRepo.On("GetWordCountInDateRange", testUser.ID, mock.Anything, mock.Anything).
@@ -51,7 +54,7 @@ func TestUserService_GetUserStats(t *testing.T) {
 func TestUserService_GetGenerationStatus(t *testing.T) {
 	mockReadingRepo := new(MockReadingRecordRepository)
 	mockUserRepo := new(MockUserRepository)
-	userService := NewUserService(mockReadingRepo, mockUserRepo)
+	userService := NewUserService(mockReadingRepo, mockUserRepo, testDailyLimit)
 
 	baseUser := *testUser
 
@@ -67,7 +70,7 @@ func TestUserService_GetGenerationStatus(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, 3, status.CurrentCount)
-		assert.Equal(t, 5, status.Limit)
+		assert.Equal(t, testDailyLimit, status.Limit)
 
 		mockUserRepo.AssertExpectations(t)
 	})
@@ -84,7 +87,7 @@ func TestUserService_GetGenerationStatus(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, 0, status.CurrentCount)
-		assert.Equal(t, 5, status.Limit)
+		assert.Equal(t, testDailyLimit, status.Limit)
 
 		mockUserRepo.AssertExpectations(t)
 	})

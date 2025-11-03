@@ -18,7 +18,7 @@ func setupStoryServiceTest(t *testing.T) (*MockStoryRepository, *MockReadingReco
 	mockUserRepo := new(MockUserRepository)
 	mockLLM := new(MockLLMService)
 	
-	storyService := NewStoryService(mockStoryRepo, mockReadingRepo, mockUserRepo, mockLLM)
+	storyService := NewStoryService(mockStoryRepo, mockReadingRepo, mockUserRepo, mockLLM, testDailyLimit)
 	
 	return mockStoryRepo, mockReadingRepo, mockUserRepo, mockLLM, storyService
 }
@@ -97,7 +97,7 @@ func TestStoryService_GenerateStory(t *testing.T) {
 
 		// ユーザーの状態 (今日すでに5回生成済み)
 		userState := baseUser
-		userState.GenerationCount = 5 // 制限(5)に達している
+		userState.GenerationCount = testDailyLimit // 制限(5)に達している
 		today := time.Now()
 		userState.LastGenerationAt = &today
 

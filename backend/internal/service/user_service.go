@@ -7,9 +7,9 @@ import (
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
 )
 
-const (
-	dailyGenerationLimit = 5
-)
+// const (
+// 	dailyGenerationLimit = 5
+// )
 
 type UserStats struct {
 	TotalWordCount     int
@@ -33,12 +33,14 @@ type IUserService interface {
 type UserService struct {
 	ReadingRecordRepo repository.IReadingRecordRepository
 	UserRepo          repository.IUserRepository
+	DailyLimit        int
 }
 
-func NewUserService(readingRecordRepo repository.IReadingRecordRepository, userRepo repository.IUserRepository) IUserService {
+func NewUserService(readingRecordRepo repository.IReadingRecordRepository, userRepo repository.IUserRepository, dailyLimit int) IUserService {
 	return &UserService{
 		ReadingRecordRepo: readingRecordRepo,
 		UserRepo:          userRepo,
+		DailyLimit:        dailyLimit,
 	}
 }
 
@@ -120,7 +122,7 @@ func (s *UserService) GetGenerationStatus(userID int) (*GenerationStatus, error)
 
 	status := &GenerationStatus{
 		CurrentCount: currentCount,
-		Limit:        dailyGenerationLimit,
+		Limit:        s.DailyLimit,
 	}
 
 	return status, nil
