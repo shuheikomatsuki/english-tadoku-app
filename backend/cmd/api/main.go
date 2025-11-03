@@ -22,19 +22,26 @@ func main() {
 	// 	AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 	// }))
 
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		// ローカル開発用
+		frontendURL = "http://localhost:5173"
+	}
+
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{
-			"https://english-tadoku-app-v1.onrender.com", // Render (本番)
-			"http://localhost:5173",                   // Vite開発
-			"http://127.0.0.1:5173",                   // Vite代替
+			frontendURL,
+			"http://localhost:5173",
+			"http://127.0.0.1:5173",
 		},
-		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowMethods: []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders: []string{
 			echo.HeaderOrigin,
 			echo.HeaderContentType,
 			echo.HeaderAccept,
 			echo.HeaderAuthorization,
 		},
+		AllowCredentials: true,
 	}))
 
 	e.Validator = handler.NewValidator()
