@@ -94,14 +94,17 @@ const Login: React.FC<LoginProps> = ({ defaultEmail = '', defaultPassword = '' }
         <div>
           <button 
             type="submit"
-            className="w-full mt-4 py-2 px-4 bg-black text-white rounded-lg hover:bg-gray-800 transition font-medium"
+            className="w-full mt-4 py-2 px-4 bg-black text-white rounded-lg hover:bg-gray-800 transition font-medium flex justify-center items-center"
             style={{
               backgroundColor: '#000000',
               color: '#ffffff'
             }}
-            disabled={isLoading}
+            disabled={isLoading} 
           >
-            {isLoading ? <Loader2 className="animate-spin h-5 w-5" /> : 'Login'}
+            {isLoading && (
+              <Loader2 className="h-5 w-5 animate-spin mr-2" />
+            )}
+            Login
           </button>
         </div>
       </form>
