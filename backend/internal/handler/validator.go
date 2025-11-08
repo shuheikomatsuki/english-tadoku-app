@@ -3,7 +3,6 @@ package handler
 import (
 	"fmt"
 	"net/http"
-	// "strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -38,15 +37,11 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 			default:
 				errorMessage = fmt.Sprintf("validation failed on field %s with rule %s", fieldError.Field(), fieldError.Tag())
 			}
-			break
+			// break
 		}
 
 		return echo.NewHTTPError(http.StatusBadRequest, ValidationErrorResponse{Error: errorMessage})
 
-		// validationError := ValidationErrorResponse{
-		// 	Error: fmt.Sprintf("validation failed: %s", err.Error()),
-		// }
-		// return echo.NewHTTPError(http.StatusBadRequest, validationError)
 	}
 	return nil
 }

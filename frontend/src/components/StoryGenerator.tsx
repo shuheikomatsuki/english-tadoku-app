@@ -1,18 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import apiClient from '../apiClient';
-import { SparklesIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import type { Story } from '../types';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 
 interface StoryGeneratorProps {
   onStoryGenerated: (story: Story) => void;
 }
 
+interface GenerationStatus {
+  current_count: number;
+  limit: number;
+}
+
 const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) => {
+  const navigate = useNavigate();
   const [prompt, setPrompt] = useState('');
-  const [generatedStory, setGeneratedStory] = useState<Story | null>(null);
+  // const [generatedStory, setGeneratedStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [generationStatus, setGenerationStatus] = useState<GenerationStatus | null>(null);
+
+  useEffect(() => {
+    const fetchGenerationStatus = async () => {
+      try {
+        const response = await apiClient.get<GenerationStatus>('/users/me/generation-status');
+        setGenerationStatus(response.data);
+      } catch (err) {
+        console.error('Failed to fetch generation status:', err);
+      }
+    };
+
+    fetchGenerationStatus();
+  }, []);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -22,15 +44,33 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
 
     setIsLoading(true);
     setError('');
-    setGeneratedStory(null);
+    // setGeneratedStory(null);
 
     try {
       const response = await apiClient.post<Story>('/stories', { prompt });
-      setGeneratedStory(response.data);
+      const newStory = response.data;
+      // setGeneratedStory(response.data);
       onStoryGenerated(response.data);
+
+      if (generationStatus) {
+        setGenerationStatus({
+          ...generationStatus,
+          current_count: generationStatus.current_count + 1,
+        });
+      }
+
       setPrompt('');
+      navigate(`/stories/${newStory.id}`);
     } catch (err) {
-      setError('Failed to generate story. Please try again.');
+      if (axios.isAxiosError(err) && err.response) {
+        if (err.response.status === 429) {
+          setError('You have reached your daily story generation limit. Please try again tomorrow.');
+        } else {
+          setError('Failed to generate story. Please try again.');
+        }
+      } else {
+        setError('An unexpected error occurred.');
+      }
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -50,13 +90,40 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
           onChange={(e) => setPrompt(e.target.value)}
           disabled={isLoading}
         />
+
+        {/* --- 生成回数の表示 --- */}
+        {generationStatus && (
+          <div className="text-lg text-right mb-2">
+            Today's generations: {generationStatus.current_count} / {generationStatus.limit}
+          </div>
+        )}
+
+        {/* --- 制限到達時のメッセージ --- */}
+        {generationStatus && generationStatus.current_count >= generationStatus.limit && (
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded text-center" role="alert">
+            <span className="block sm:inline">You have reached your daily generation limit. Please try again tomorrow.</span>
+          </div>
+        )}
+
         <button
           className="w-full mt-4 py-3 bg-black text-white rounded-lg hover:bg-gray-800 font-bold flex justify-center"
           onClick={handleGenerate}
-          disabled={isLoading}
+          // disabled={isLoading}
+          disabled={isLoading || (generationStatus ? generationStatus.current_count >= generationStatus.limit : false)}
         >
-          <SparklesIcon className="h-5 w-5 mr-2" />
-          {isLoading ? 'Generating...' : 'Generate Story'}
+          {isLoading ? (
+            // --- ローディング中の表示 ---
+            <>
+              <ArrowPathIcon className="h-5 w-5 mr-3 animate-spin" />
+              <span>Generating...</span>
+            </>
+          ) : (
+            // --- 通常時の表示 (変更なし) ---
+            <>
+              <SparklesIcon className="h-5 w-5 mr-2" />
+              <span>Generate Story</span>
+            </>
+          )}
         </button>
       </div>
 
@@ -64,14 +131,6 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
       {error && (
         <div className="bg-red-100 border border-red-400 px-4 py-3 rounded mb-6" role="alert">
           <span className="">{error}</span>
-        </div>
-      )}
-      
-      {/* --- 生成されたストーリー表示 --- */}
-      {generatedStory && (
-        <div className="bg-white p-6 rounded-lg shadow-md animate-fade-in">
-          <h3 className="text-lg font-bold p-2">{generatedStory.title}</h3>
-          <p className="whitespace-pre-wrap p-2">{generatedStory.content}</p>
         </div>
       )}
 

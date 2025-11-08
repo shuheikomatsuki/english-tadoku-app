@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import apiClient from "../apiClient";
 import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
-import { AxiosError } from 'axios';
 
 interface ErrorResponse {
   error: string;

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -23,26 +24,23 @@ func countWords(text string) int {
 	return len(words)
 }
 
-func NewLLMService(apiKey string) ILLMService {
+func NewLLMService(apiKey string) (ILLMService, error) {
 	if apiKey == "" {
-		fmt.Println("WARNING: GEMINI_API_KEY is not set. Using mock implementation.")
-		return &MockLLMService{}
+		return nil, errors.New("GEMINI_API_KEY is not set")
 	}
 
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{
 		APIKey: apiKey,
-		// Backend は指定せず、SDK デフォルトに任せる
 	})
 	if err != nil {
-		fmt.Printf("WARNING: failed to create Gemini client: %v\nUsing mock implementation.\n", err)
-		return &MockLLMService{}
+		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
 
 	return &LLMService{
 		APIKey: apiKey,
 		client: client,
-	}
+	}, nil
 }
 
 func (s *LLMService) GenerateStory(prompt string) (string, error) {
@@ -75,8 +73,3 @@ func (s *LLMService) GenerateStory(prompt string) (string, error) {
 	return text, nil
 }
 
-type MockLLMService struct{}
-
-func (s *MockLLMService) GenerateStory(prompt string) (string, error) {
-	return fmt.Sprintf("This is a mock story generated for the prompt: '%s'.", prompt), nil
-}

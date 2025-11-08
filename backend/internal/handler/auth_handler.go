@@ -3,45 +3,69 @@ package handler
 import (
 	"errors"
 	"net/http"
-	"os"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	"golang.org/x/crypto/bcrypt"
 
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/model"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
+	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/service"
 )
 
 type IAuthHandler interface {
 	SignUp(e echo.Context) error
 	Login(e echo.Context) error
+	GetUserStats(e echo.Context) error
+	GetGenerationStatus(e echo.Context) error
 }
 
 type AuthHandler struct {
-	UserRepo repository.IUserRepository
+	AuthService service.IAuthService
+	UserService service.IUserService
 }
 
-func NewAuthHandler(userRepo repository.IUserRepository) IAuthHandler {
+func NewAuthHandler(authSvc service.IAuthService, userSvc service.IUserService) IAuthHandler {
 	return &AuthHandler{
-		UserRepo: userRepo,
+		AuthService: authSvc,
+		UserService: userSvc,
 	}
 }
 
+type UserStatsResponse struct {
+	TotalWordCount     int            `json:"total_word_count"`
+	TodayWordCount     int            `json:"today_word_count"`
+	WeeklyWordCount    int            `json:"weekly_word_count"`
+	MonthlyWordCount   int            `json:"monthly_word_count"`
+	YearlyWordCount    int            `json:"yearly_word_count"`
+	Last7DaysWordCount map[string]int `json:"last_7_days_word_count"`
+}
+
 type SignUpRequest struct {
-	Email 	 string `json:"email" validate:"required,email"`
+	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=8"`
 }
 
 type LoginRequest struct {
-	Email 	 string `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
 type JwtCustomClaims struct {
 	UserID int `json:"user_id"`
 	jwt.RegisteredClaims
+}
+
+func getUserIDFromContext(c echo.Context) (int, error) {
+	user, ok := c.Get("user").(*jwt.Token)
+	if !ok {
+		return 0, errors.New("failed to get user from context")
+	}
+
+	claims, ok := user.Claims.(*JwtCustomClaims)
+	if !ok {
+		return 0, errors.New("failed to get claims from token")
+	}
+
+	return claims.UserID, nil
 }
 
 func (h *AuthHandler) SignUp(c echo.Context) error {
@@ -54,18 +78,8 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 		return err
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	err := h.AuthService.SignUp(req.Email, req.Password)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "failed to hash password")
-	}
-
-	user := &model.User{
-		Email: req.Email,
-		PasswordHash: string(hashedPassword),
-	}
-
-	if err := h.UserRepo.CreateUser(user); err != nil {
-		// TODO: email が重複した際のエラーハンドリング
 		if errors.Is(err, repository.ErrEmailAlreadyExists) {
 			return c.JSON(http.StatusConflict, map[string]string{"error": "This email address is already registered."})
 		}
@@ -81,26 +95,19 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "invalid request body")
 	}
 
-	user, err := h.UserRepo.FindUserByEmail(req.Email)
+	// (簡易バリデーション)
+	if req.Email == "" || req.Password == "" {
+		return c.JSON(http.StatusUnauthorized, "invalid email or password")
+	}
+
+	// ユーザー検証
+	user, err := h.AuthService.ValidateUser(req.Email, req.Password)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, "invalid email or password")
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, "invalid email or password")
-	}
-
-	claims := &JwtCustomClaims{
-		user.ID, 
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	// トークン生成
+	t, err := h.AuthService.GenerateToken(user.ID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "failed to generate token")
 	}
@@ -108,4 +115,42 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"token": t,
 	})
+}
+
+func (h *AuthHandler) GetUserStats(c echo.Context) error {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, "invalid token")
+	}
+
+	stats, err := h.UserService.GetUserStats(userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to get user stats"})
+	}
+
+	// レスポンス生成
+	res := UserStatsResponse{
+		TotalWordCount:     stats.TotalWordCount,
+		TodayWordCount:     stats.TodayWordCount,
+		WeeklyWordCount:    stats.WeeklyWordCount,
+		MonthlyWordCount:   stats.MonthlyWordCount,
+		YearlyWordCount:    stats.YearlyWordCount,
+		Last7DaysWordCount: stats.Last7DaysWordCount,
+	}
+
+	return c.JSON(http.StatusOK, res)
+}
+
+func (h *AuthHandler) GetGenerationStatus(c echo.Context) error {
+	userID, err := getUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, "invalid token")
+	}
+
+	status, err := h.UserService.GetGenerationStatus(userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "failed to get generation status"})
+	}
+
+	return c.JSON(http.StatusOK, status)
 }

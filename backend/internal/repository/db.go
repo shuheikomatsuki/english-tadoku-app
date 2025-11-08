@@ -11,12 +11,18 @@ import (
 )
 
 func NewDBConnection() (*sqlx.DB, error) {
+	sslmode := "disable"
+	if os.Getenv("RENDER") == "true" {
+		sslmode = "require"
+	}
+
 	dsn := fmt.Sprintf(
-		"host=%s port=5432 user=%s password=%s dbname=%s sslmode=disable",
+		"host=%s port=5432 user=%s password=%s dbname=%s sslmode=%s",
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"),
+		sslmode,
 	)
 
 	db, err := sqlx.Connect("postgres", dsn)

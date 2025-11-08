@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Header: React.FC = () => {
@@ -14,12 +14,23 @@ const Header: React.FC = () => {
 
         <nav className="flex items-center">
           {isAuthenticated ? (
-            <button
-              onClick={logout}
-              className="bg-red-500 hover:bg-red-600 text-white text-xl font-bold m-4 py-2 px-4 rounded"
-            >
-              Logout
-            </button>
+            <>
+              <NavLink
+                to="/profile"
+                className={({ isActive }) =>
+                  `font-medium ${isActive ? 'text-blue-600' : 'text-gray-600 hover:text-blue-600'} mx-4 text-xl`
+                }
+              >
+                Profile
+              </NavLink>
+
+              <button
+                onClick={logout}
+                className="bg-red-500 hover:bg-red-600 text-white text-xl font-bold m-4 py-2 px-4 rounded"
+              >
+                Logout
+              </button>
+            </>
           ) : (
             <Link
               to="/auth"

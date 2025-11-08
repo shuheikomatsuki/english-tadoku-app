@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import StoryDetail from './components/StoryDetail';
 import Layout from './components/Layout';
+import ProfilePage from './components/ProfilePage';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -16,6 +17,7 @@ function App() {
           <>
             <Route index element={<Dashboard />} />
             <Route path="stories/:id" element={<StoryDetail />} />
+            <Route path="profile" element={<ProfilePage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </>
         ) : (
