@@ -8,7 +8,7 @@ const Header: React.FC = () => {
   return (
     <header className="bg-white shadow-md">
       <div className="container mx-auto p-4 flex justify-between items-center">
-        <Link to="/" className="text-4xl font-bold text-gray-800">
+        <Link to="/" className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
           English Tadoku App
         </Link>
 
@@ -26,7 +26,7 @@ const Header: React.FC = () => {
 
               <button
                 onClick={logout}
-                className="bg-red-500 hover:bg-red-600 text-white text-xl font-bold m-4 py-2 px-4 rounded"
+                className="bg-red-500 hover:bg-red-600 text-white text-xl font-bold m-4 py-2 px-2 rounded"
               >
                 Logout
               </button>
