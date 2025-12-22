@@ -5,6 +5,7 @@ import type { Story } from '../types';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const MAX_PROMPT_CHARS = Number(import.meta.env.VITE_MAX_PROMPT_CHARS) || 2000;
 
 interface StoryGeneratorProps {
   onStoryGenerated: (story: Story) => void;
@@ -18,7 +19,6 @@ interface GenerationStatus {
 const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) => {
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState('');
-  // const [generatedStory, setGeneratedStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [generationStatus, setGenerationStatus] = useState<GenerationStatus | null>(null);
@@ -42,14 +42,17 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
       return;
     }
 
+    if (prompt.length > MAX_PROMPT_CHARS) {
+      setError(`プロンプトは最大${MAX_PROMPT_CHARS}文字までです。`);
+      return;
+    }
+
     setIsLoading(true);
     setError('');
-    // setGeneratedStory(null);
 
     try {
       const response = await apiClient.post<Story>('/stories', { prompt });
       const newStory = response.data;
-      // setGeneratedStory(response.data);
       onStoryGenerated(response.data);
 
       if (generationStatus) {
@@ -89,6 +92,7 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           disabled={isLoading}
+          maxLength={MAX_PROMPT_CHARS}
         />
 
         {/* --- 生成回数の表示 --- */}
