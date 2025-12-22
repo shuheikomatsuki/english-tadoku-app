@@ -81,8 +81,21 @@ func main() {
 	e.GET("/health", func(c echo.Context) error {
 		return c.String(http.StatusOK, "ok")
 	})
+	e.HEAD("/health", func(c echo.Context) error {
+		return c.NoContent(http.StatusOK)
+	})
 
 	e.GET("/db-health", func(c echo.Context) error {
+		ctx, cancel := context.WithTimeout(c.Request().Context(), 5*time.Second)
+		defer cancel()
+
+		if err := db.PingContext(ctx); err != nil {
+			c.Logger().Warnf("db-health check failed: %v", err)
+			return c.String(http.StatusServiceUnavailable, "database connection unhealthy")
+		}
+		return c.String(http.StatusOK, "database connection healthy")
+	})
+	e.HEAD("/db-health", func(c echo.Context) error {
 		ctx, cancel := context.WithTimeout(c.Request().Context(), 5*time.Second)
 		defer cancel()
 
