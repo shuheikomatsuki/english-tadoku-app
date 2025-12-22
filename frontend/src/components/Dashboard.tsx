@@ -14,8 +14,6 @@ interface StoriesResponse {
 const storiesPerPage = 5;
 
 const Dashboard: React.FC = () => {
-  // const { logout } = useAuth();
-
   const [stories, setStories] = useState<Story[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -33,7 +31,7 @@ const Dashboard: React.FC = () => {
         setStories(response.data.stories || []);
         setTotalPages(response.data.total_pages);
       } catch (err) {
-        setError('ストーリーの読み込みに失敗しました。');
+        setError('文章の読み込みに失敗しました。');
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -84,13 +82,6 @@ const Dashboard: React.FC = () => {
       <div className="w-full max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-center w-full">Dashboard</h1>
-          {/* <button 
-            onClick={logout}
-            className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition-colors"
-            
-          >
-            Logout
-          </button> */}
         </div>
 
         <StoryGenerator onStoryGenerated={handleStoryGenerated} />

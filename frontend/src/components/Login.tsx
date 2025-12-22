@@ -32,7 +32,7 @@ const Login: React.FC<LoginProps> = ({ defaultEmail = '', defaultPassword = '' }
       setPassword('');
 
     } catch (error) {
-      setMessage('Login failed. Please check your email and password');
+      setMessage('ログインに失敗しました。メールアドレスとパスワードを確認してください。');
       console.error(error);
     } finally {
       setIsLoading(false);

@@ -59,7 +59,6 @@ const StoryDetail: React.FC = () => {
       setIsEditing(false);
     } catch (error) {
       console.error('タイトルの更新に失敗しました:', error);
-      // setError('Failed to update title.');
       setUpdateError('タイトルの更新に失敗しました。もう一度お試しください。');
     }
   };
@@ -77,7 +76,6 @@ const StoryDetail: React.FC = () => {
     try {
       await apiClient.post(`/stories/${storyDetail.id}/read`);
       setStoryDetail(prev => prev ? { ...prev, read_count: prev.read_count + 1 } : null);
-      // alertは削除
     } catch (error) {
       console.error('既読マークの登録に失敗しました:', error);
       // TODO: トースト通知でエラーを表示
@@ -92,7 +90,6 @@ const StoryDetail: React.FC = () => {
     try {
       await apiClient.delete(`/stories/${storyDetail.id}/read/latest`);
       setStoryDetail(prev => prev ? { ...prev, read_count: Math.max(0, prev.read_count - 1) } : null);
-      // alertは削除
     } catch (err) {
       console.error('最後の既読マークの取り消しに失敗しました:', err);
       // TODO: トースト通知でエラーを表示
@@ -111,7 +108,6 @@ const StoryDetail: React.FC = () => {
       // 2回目以降はモーダルを開く
       setIsMarkAsReadModalOpen(true);
     }
-    // setIsMarkAsReadModalOpen(true);
   };
 
   const handleUndoReadClick = () => {
