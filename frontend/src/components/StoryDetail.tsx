@@ -123,8 +123,8 @@ const StoryDetail: React.FC = () => {
 
   return (
     <>
-      <div className="bg-white p-3 md:p-8 rounded-lg shadow-md w-full max-w-6xl mx-auto">
-        <Link to="/" className="text-blue-500 text-2xl hover:underline mb-4">&larr; Back to Dashboard</Link>
+      <div className="bg-white p-1 md:p-8 rounded-lg shadow-md w-full max-w-full mx-auto">
+        <Link to="/" className="block text-blue-500 text-2xl hover:underline mt-3 mb-4 md:mt-0">&larr; Back to Dashboard</Link>
 
         <div className="my-4 pt-6">
           {isEditing ? (
@@ -187,7 +187,7 @@ const StoryDetail: React.FC = () => {
           </div>
         </div>
 
-        <div className="prose max-w-none prose-sm sm:prose-base mb-6 pt-10 text-left">
+        <div className="prose max-w-none text-sm md:text-base lg:text-lg mb-6 pt-6 text-left px-2 md:px-0">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {storyDetail?.content || ''}
           </ReactMarkdown>
