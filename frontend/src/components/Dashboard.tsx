@@ -33,7 +33,7 @@ const Dashboard: React.FC = () => {
         setStories(response.data.stories || []);
         setTotalPages(response.data.total_pages);
       } catch (err) {
-        setError('Failed to load stories.');
+        setError('ストーリーの読み込みに失敗しました。');
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -70,7 +70,7 @@ const Dashboard: React.FC = () => {
       // TODO: 総ページ数が変わる可能性があるので、リストを再取得するのがより堅牢
       // setRefetchTrigger(prev => prev + 1); // のような仕組みを再導入する
     } catch (err) {
-      console.error('Failed to delete story:', err);
+      console.error('文章の削除に失敗しました:', err);
       // TODO: トースト通知でエラーを表示
     } finally {
       // 処理が終わったら、モーダルを閉じて対象IDをリセット
@@ -98,7 +98,7 @@ const Dashboard: React.FC = () => {
         {/* TODO: 他のダッシュボードコンテンツをここに追加可能 */}
 
         {isLoading ? (
-          <p className="mt-8">Loading stories.</p>
+          <p className="mt-8">文章を読み込み中...</p>
         ) : error ? (
           <p className="mt-8 text-red-500">{error}</p>
         ) : (
@@ -117,9 +117,9 @@ const Dashboard: React.FC = () => {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={executeDeleteStory}
-        title="Delete Story"
-        message="Are you sure you want to delete this story? This action cannot be undone."
-        confirmText="Yes, Delete"
+        title="文章を削除"
+        message="本当にこの文章を削除しますか？この操作は元に戻せません。"
+        confirmText="はい、削除します"
         intent="warning"
       />
     </>
