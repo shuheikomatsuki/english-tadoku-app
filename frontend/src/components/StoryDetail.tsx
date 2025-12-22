@@ -123,7 +123,7 @@ const StoryDetail: React.FC = () => {
 
   return (
     <>
-      <div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="bg-white p-3 md:p-8 rounded-lg shadow-md w-full max-w-6xl mx-auto">
         <Link to="/" className="text-blue-500 text-2xl hover:underline mb-4">&larr; Back to Dashboard</Link>
 
         <div className="my-4 pt-6">
