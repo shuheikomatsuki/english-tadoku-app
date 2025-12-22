@@ -20,6 +20,7 @@ const AuthPage: React.FC = () => {
           <h2 className="text-2xl font-bold text-center">Login (Test Environment)</h2>
           <p className="text-center text-gray-500 mb-2">
             Use preset test credentials below:
+            なんかログインにめっちゃ時間かかる時やログイン失敗する時ある。原因調査中。
           </p>
           <div className="text-center text-sm bg-gray-100 p-3 rounded">
             <p>Email: <code>{testEmail}</code></p>
