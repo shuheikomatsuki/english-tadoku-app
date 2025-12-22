@@ -18,7 +18,6 @@ interface GenerationStatus {
 const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) => {
   const navigate = useNavigate();
   const [prompt, setPrompt] = useState('');
-  // const [generatedStory, setGeneratedStory] = useState<Story | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [generationStatus, setGenerationStatus] = useState<GenerationStatus | null>(null);
@@ -44,12 +43,10 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
 
     setIsLoading(true);
     setError('');
-    // setGeneratedStory(null);
 
     try {
       const response = await apiClient.post<Story>('/stories', { prompt });
       const newStory = response.data;
-      // setGeneratedStory(response.data);
       onStoryGenerated(response.data);
 
       if (generationStatus) {

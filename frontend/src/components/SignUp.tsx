@@ -19,16 +19,16 @@ const SignUp: React.FC = () => {
 
     try {
       const response = await apiClient.post("/signup", { email, password });
-      setMessage("User created successfully!");
+      setMessage("ユーザーが正常に作成されました！");
       console.log(response.data);
       setEmail("");
       setPassword("");
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         const errorData = error.response.data as ErrorResponse;
-        setMessage(errorData.error || "An unexpected error occurred.");
+        setMessage(errorData.error || "予期しないエラーが発生しました。");
       } else {
-        setMessage("Failed to create user. Please try again.");
+        setMessage("ユーザーの作成に失敗しました。もう一度お試しください。");
       }
       console.error(error);
     }
