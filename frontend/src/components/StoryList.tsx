@@ -17,9 +17,9 @@ interface StoryListProps {
 const StoryList: React.FC<StoryListProps> = ({ stories, onDeleteStory, currentPage, totalPages, onPageChange }) => {
   return (
     <div className="mt-8 p-4 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold mb-4">Your Stories</h2>
+      <h2 className="text-2xl font-semibold mb-4">文章の履歴</h2>
       {stories.length === 0 ? (
-        <p className="text-gray-500">You haven't generated any stories yet.</p>
+        <p className="text-gray-500">まだ文章が生成されていません。</p>
       ) : (
         <ul className="space-y-4">
           {stories.map(story => (
@@ -27,14 +27,14 @@ const StoryList: React.FC<StoryListProps> = ({ stories, onDeleteStory, currentPa
               <Link to={`/stories/${story.id}`} className="flex-grow">
                 <h3 className="font-bold text-lg hover:text-blue-600">{story.title}</h3>
                 <p className="text-sm text-gray-500">
-                  Created on: {format(parseISO(story.created_at), 'PPpp')}
+                  作成日: {format(parseISO(story.created_at), 'PPpp')}
                 </p>
               </Link>
 
               <button
                 onClick={() => onDeleteStory(story.id)}
                 className="ml-4 p-2 text-gray-500 hover:text-red-600 hover:bg-red-100 rounded-full transition-colors"
-                aria-label="Delete Story"
+                aria-label="文章を削除"
               >
                 <TrashIcon className="h-5 w-5" />
               </button>
@@ -50,7 +50,7 @@ const StoryList: React.FC<StoryListProps> = ({ stories, onDeleteStory, currentPa
             disabled={currentPage === 1}
             className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
           >
-            Previous
+            前へ
           </button>
 
           <button
@@ -58,7 +58,7 @@ const StoryList: React.FC<StoryListProps> = ({ stories, onDeleteStory, currentPa
             disabled={currentPage === totalPages}
             className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
           >
-            Next
+            次へ
           </button>
         </div>
       )}

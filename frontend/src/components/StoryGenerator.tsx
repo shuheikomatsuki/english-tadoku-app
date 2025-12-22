@@ -29,7 +29,7 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
         const response = await apiClient.get<GenerationStatus>('/users/me/generation-status');
         setGenerationStatus(response.data);
       } catch (err) {
-        console.error('Failed to fetch generation status:', err);
+        console.error('生成状況の取得に失敗しました:', err);
       }
     };
 
@@ -38,7 +38,7 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
-      setError('Please enter a prompt.');
+      setError('プロンプトを入力してください。');
       return;
     }
 
@@ -64,12 +64,12 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         if (err.response.status === 429) {
-          setError('You have reached your daily story generation limit. Please try again tomorrow.');
+          setError('本日のストーリー生成回数の上限に達しました。明日もう一度お試しください。');
         } else {
-          setError('Failed to generate story. Please try again.');
+          setError('ストーリーの生成に失敗しました。もう一度お試しください。');
         }
       } else {
-        setError('An unexpected error occurred.');
+        setError('予期しないエラーが発生しました。もう一度お試しください。');
       }
       console.error(err);
     } finally {
@@ -81,11 +81,11 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
     <div className="">
       {/* --- ストーリー生成フォーム --- */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-6">
-        <h2 className="text-xl font-bold mb-4">Generate a New Story</h2>
+        <h2 className="text-xl font-bold mb-4">新しい文章を生成</h2>
         <textarea
           className="w-full p-2 mb-4 border border-gray-300 rounded-md"
           rows={3}
-          placeholder="Enter a prompt for your story..."
+          placeholder="文章のプロンプトを入力してください..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           disabled={isLoading}
@@ -94,14 +94,14 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
         {/* --- 生成回数の表示 --- */}
         {generationStatus && (
           <div className="text-lg text-right mb-2">
-            Today's generations: {generationStatus.current_count} / {generationStatus.limit}
+            今日の生成回数: {generationStatus.current_count} / {generationStatus.limit}
           </div>
         )}
 
         {/* --- 制限到達時のメッセージ --- */}
         {generationStatus && generationStatus.current_count >= generationStatus.limit && (
           <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded text-center" role="alert">
-            <span className="block sm:inline">You have reached your daily generation limit. Please try again tomorrow.</span>
+            <span className="block sm:inline">本日の生成回数の上限に達しました。明日もう一度お試しください。</span>
           </div>
         )}
 
@@ -115,13 +115,13 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
             // --- ローディング中の表示 ---
             <>
               <ArrowPathIcon className="h-5 w-5 mr-3 animate-spin" />
-              <span>Generating...</span>
+              <span>生成中...</span>
             </>
           ) : (
             // --- 通常時の表示 (変更なし) ---
             <>
               <SparklesIcon className="h-5 w-5 mr-2" />
-              <span>Generate Story</span>
+              <span>文章を生成</span>
             </>
           )}
         </button>

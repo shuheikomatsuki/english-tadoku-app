@@ -33,7 +33,7 @@ const StoryDetail: React.FC = () => {
         setStoryDetail(response.data);
         setEditedTitle(response.data.title);
       } catch (err) {
-        setError('Failed to load the story.');
+        setError('ストーリーの読み込みに失敗しました。');
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -47,7 +47,7 @@ const StoryDetail: React.FC = () => {
     if (!storyDetail) return;
 
     if (!editedTitle.trim()) {
-      setUpdateError('Title cannot be empty.');
+      setUpdateError('タイトルを入力してください。');
       return;
     }
 
@@ -58,9 +58,9 @@ const StoryDetail: React.FC = () => {
       setStoryDetail(response.data);
       setIsEditing(false);
     } catch (error) {
-      console.error('Failed to update title:', error);
+      console.error('タイトルの更新に失敗しました:', error);
       // setError('Failed to update title.');
-      setUpdateError('Failed to update title.');
+      setUpdateError('タイトルの更新に失敗しました。もう一度お試しください。');
     }
   };
 
@@ -79,7 +79,7 @@ const StoryDetail: React.FC = () => {
       setStoryDetail(prev => prev ? { ...prev, read_count: prev.read_count + 1 } : null);
       // alertは削除
     } catch (error) {
-      console.error('Failed to mark as read', error);
+      console.error('既読マークの登録に失敗しました:', error);
       // TODO: トースト通知でエラーを表示
     } finally {
       setIsSubmitting(false);
@@ -94,7 +94,7 @@ const StoryDetail: React.FC = () => {
       setStoryDetail(prev => prev ? { ...prev, read_count: Math.max(0, prev.read_count - 1) } : null);
       // alertは削除
     } catch (err) {
-      console.error('Failed to undo last read', err);
+      console.error('最後の既読マークの取り消しに失敗しました:', err);
       // TODO: トースト通知でエラーを表示
     } finally {
       setIsSubmitting(false);
@@ -118,13 +118,13 @@ const StoryDetail: React.FC = () => {
     setIsUndoModalOpen(true);
   };
 
-  if (isLoading) return <p>Loading story...</p>;
+  if (isLoading) return <p>文章を読み込んでいます...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
     <>
       <div className="bg-white p-1 md:p-8 rounded-lg shadow-md w-full max-w-full mx-auto">
-        <Link to="/" className="block text-blue-500 text-2xl hover:underline mt-3 mb-4 md:mt-0">&larr; Back to Dashboard</Link>
+        <Link to="/" className="block text-blue-500 text-2xl hover:underline mt-3 mb-4 md:mt-0">&larr; Dashboardに戻る</Link>
 
         <div className="my-4 pt-6">
           {isEditing ? (
@@ -174,7 +174,7 @@ const StoryDetail: React.FC = () => {
           <div className="flex items-center">
             <HashtagIcon className="h-4 w-4 mr-1.5" />
             <span className="font-semibold">
-              {storyDetail?.word_count.toLocaleString()} words
+              {storyDetail?.word_count.toLocaleString()} 単語
             </span>
           </div>
 
@@ -182,7 +182,7 @@ const StoryDetail: React.FC = () => {
           <div className="flex items-center">
             <ReadCountIcon className="h-4 w-4 mr-1.5" />
             <span className="font-semibold">
-              Read {storyDetail?.read_count || 0} time(s)
+              読んだ回数: {storyDetail?.read_count || 0} 回
             </span>
           </div>
         </div>
@@ -201,7 +201,7 @@ const StoryDetail: React.FC = () => {
             className="w-full flex items-center justify-center py-2 px-4 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600"
           >
             <CheckIcon className="h-5 w-5 mr-2" />
-            {isSubmitting ? 'Recording...' : 'Mark as Read'}
+            {isSubmitting ? '記録中...' : '読了を記録'}
           </button>
 
           {storyDetail && storyDetail.read_count > 0 && (
@@ -209,9 +209,9 @@ const StoryDetail: React.FC = () => {
               onClick={handleUndoReadClick}
               disabled={isSubmitting}
               className="w-full p-2 bg-gray-200 hover:bg-gray-300 rounded-full mt-6 font-bold"
-              title="Undo last read"
+              title="直近の読了を取り消す"
             >
-              Undo Last Read
+              直近の読了を取り消す
             </button>
           )}
         </div>
@@ -222,9 +222,9 @@ const StoryDetail: React.FC = () => {
           isOpen={isMarkAsReadModalOpen}
           onClose={() => setIsMarkAsReadModalOpen(false)}
           onConfirm={executeMarkAsRead}
-          title="Record Reading Again"
-          message="You have read this story before. Do you want to record it again?"
-          confirmText="Yes, Record It"
+          title="再度読了を記録"
+          message="この文章は以前に読了しています。再度記録しますか？"
+          confirmText="はい、記録します"
           intent="success"
         />
 
@@ -232,9 +232,9 @@ const StoryDetail: React.FC = () => {
           isOpen={isUndoModalOpen}
           onClose={() => setIsUndoModalOpen(false)}
           onConfirm={executeUndoRead}
-          title="Undo Last Reading"
-          message="Are you sure you want to remove the last reading record? This action cannot be undone."
-          confirmText="Yes, Undo"
+          title="直近の読了を取り消す"
+          message="直近の読了記録を削除してもよろしいですか？この操作は元に戻せません。"
+          confirmText="はい、取り消します"
           intent="warning"
         />
     </>

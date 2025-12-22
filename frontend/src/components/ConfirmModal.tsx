@@ -19,8 +19,8 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   title,
   message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
+  confirmText = '確認',
+  cancelText = 'キャンセル',
   intent = 'warning',
 }) => {
   const Icon = intent === 'warning' ? ExclamationTriangleIcon : CheckCircleIcon;
