@@ -1,17 +1,18 @@
 package main
 
 import (
+	"context"
 	"log"
-	"os"
 	"net/http"
+	"os"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	
-	authMiddleware "github.com/shuheikomatsuki/english-tadoku-app/backend/internal/middleware"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/handler"
+	authMiddleware "github.com/shuheikomatsuki/english-tadoku-app/backend/internal/middleware"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/service"
 )
@@ -42,8 +43,6 @@ func main() {
 	}))
 
 	e.Validator = handler.NewValidator()
-
-	// .env から読み込むなどの初期設定
 
 	// DB接続
 	db, err := repository.NewDBConnection()
@@ -83,6 +82,17 @@ func main() {
 		return c.String(http.StatusOK, "ok")
 	})
 
+	e.GET("/db-health", func(c echo.Context) error {
+		ctx, cancel := context.WithTimeout(c.Request().Context(), 5*time.Second)
+		defer cancel()
+
+		if err := db.PingContext(ctx); err != nil {
+			c.Logger().Warnf("db-health check failed: %v", err)
+			return c.String(http.StatusServiceUnavailable, "database connection unhealthy")
+		}
+		return c.String(http.StatusOK, "database connection healthy")
+	})
+
 	// ルーティング設定
 	api := e.Group("/api/v1")
 	api.POST("/signup", authHandler.SignUp)
@@ -92,10 +102,10 @@ func main() {
 	userRoutes.Use(authMiddleware.JWTAuthMiddleware)
 	userRoutes.GET("/me/stats", authHandler.GetUserStats)
 	userRoutes.GET("/me/generation-status", authHandler.GetGenerationStatus)
-	
+
 	// 認証が必要なグループ
 	stories := api.Group("/stories")
-	stories.Use(authMiddleware.JWTAuthMiddleware) // TODO: JWT ミドルウェアを追加する処理
+	stories.Use(authMiddleware.JWTAuthMiddleware)
 	stories.POST("", storyHandler.GenerateStory)
 	stories.GET("", storyHandler.GetStories)
 	stories.GET("/:id", storyHandler.GetStory)
@@ -103,8 +113,6 @@ func main() {
 	stories.PATCH("/:id", storyHandler.UpdateStory)
 	stories.POST("/:id/read", storyHandler.MarkStoryAsRead)
 	stories.DELETE("/:id/read/latest", storyHandler.UndoLastRead)
-
-	// e.Logger.Fatal(e.Start(":8080"))
 
 	port := os.Getenv("PORT")
 	if port == "" {
