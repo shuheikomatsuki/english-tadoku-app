@@ -42,10 +42,13 @@ const BarChart: React.FC<{ data: { [date: string]: number } }> = ({ data }) => {
             <div
               className="w-full bg-blue-500 rounded-t-md transition-all duration-300"
               style={{ height: `${(value / maxValue) * 70}%` }}
-              title={`${value.toLocaleString()} words on ${new Date(date).toLocaleDateString()}`}
+              title={`${value.toLocaleString()} words on ${new Date(date).toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' })}`}
             ></div>
             <p className="text-xs mt-2">
-              {new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}
+              {new Date(date).toLocaleDateString('ja-JP', { 
+                weekday: 'short', 
+                timeZone: 'Asia/Tokyo' 
+              })}
             </p>
           </div>
         ))}
