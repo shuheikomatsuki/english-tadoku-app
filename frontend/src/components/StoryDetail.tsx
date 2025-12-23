@@ -161,7 +161,7 @@ const StoryDetail: React.FC = () => {
           {/* 作成日 */}
           <div className="flex items-center">
             <ClockIcon className="h-4 w-4 mr-1.5" />
-            <span>
+            <span className="font-semibold whitespace-nowrap text-xs md:text-sm">
               {storyDetail ? format(parseISO(storyDetail.created_at), 'MMM d, yyyy') : ''}
             </span>
           </div>
@@ -169,7 +169,7 @@ const StoryDetail: React.FC = () => {
           {/* 単語数 */}
           <div className="flex items-center">
             <HashtagIcon className="h-4 w-4 mr-1.5" />
-            <span className="font-semibold">
+            <span className="font-semibold whitespace-nowrap text-xs md:text-sm">
               {storyDetail?.word_count.toLocaleString()} 単語
             </span>
           </div>
@@ -177,7 +177,7 @@ const StoryDetail: React.FC = () => {
           {/* 読んだ回数 */}
           <div className="flex items-center">
             <ReadCountIcon className="h-4 w-4 mr-1.5" />
-            <span className="font-semibold">
+            <span className="font-semibold whitespace-nowrap text-xs md:text-sm">
               読んだ回数: {storyDetail?.read_count || 0} 回
             </span>
           </div>

@@ -8,7 +8,7 @@ const Header: React.FC = () => {
   return (
     <header className="bg-white shadow-md">
       <div className="container mx-auto p-4 flex justify-between items-center">
-        <Link to="/" className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800">
+        <Link to="/" className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
           English Tadoku App
         </Link>
 
@@ -34,7 +34,10 @@ const Header: React.FC = () => {
           ) : (
             <Link
               to="/auth"
-              className="bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold py-2 px-4 rounded"
+              className="bg-blue-500 text-white rounded whitespace-nowrap
+             py-2 px-3 text-sm
+             md:py-3 md:px-4 md:text-base
+             hover:bg-blue-600 transition"
             >
               Login / Sign Up
             </Link>
