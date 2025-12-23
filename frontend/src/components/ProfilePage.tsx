@@ -29,19 +29,19 @@ const BarChart: React.FC<{ data: { [date: string]: number } }> = ({ data }) => {
   return (
     <div className="mt-8">
       <h3 className="text-lg font-semibold mb-4 text-center">過去7日間</h3>
-      <div className="flex justify-around items-end h-40 bg-gray-50 p-4 rounded-lg">
+      <div className="flex justify-around items-end h-40 bg-gray-50 p-4 rounded-lg gap-2">
         {entries.map(([date, value], index) => (
-          <div key={index} className="relative flex flex-col items-center justify-end w-10 h-full">
+          <div key={index} className="relative flex flex-col items-center justify-end w-6 sm:w-10 h-full">
             
             {value > 0 && (
-              <div className="absolute -top-5 text-xs font-semibold text-gray-600">
+              <div className="absolute -top-2 text-[0.60rem] sm:text-xs font-semibold text-gray-600">
                 {value.toLocaleString()}
               </div>
             )}
 
             <div
               className="w-full bg-blue-500 rounded-t-md transition-all duration-300"
-              style={{ height: `${(value / maxValue) * 100}%` }}
+              style={{ height: `${(value / maxValue) * 70}%` }}
               title={`${value.toLocaleString()} words on ${new Date(date).toLocaleDateString()}`}
             ></div>
             <p className="text-xs mt-2">
