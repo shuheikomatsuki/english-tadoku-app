@@ -48,13 +48,27 @@ func (s *LLMService) GenerateStory(prompt string) (string, error) {
 		return "", fmt.Errorf("genai client is not initialized")
 	}
 
+instructionalPrompt := fmt.Sprintf(
+`Write a clear, factual explanation in English based on the user's prompt.
+The user's prompt may be written in Japanese or English.
+Always write the output in English.
+Use standard Markdown for paragraphs and lists where appropriate.
+Do not write a story, narrative, or fictional content.
+Return only the Markdown content, without explanations or notes outside the text.
+
+--- USER PROMPT START ---
+%s
+--- USER PROMPT END ---`,
+prompt,
+)
+
 	// API 呼び出しにタイムアウトを設定
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	const model = "gemini-2.5-flash-lite"
 
-	result, err := s.client.Models.GenerateContent(ctx, model, genai.Text(prompt), nil)
+	result, err := s.client.Models.GenerateContent(ctx, model, genai.Text(instructionalPrompt), nil)
 	if err != nil {
 		// エラーをログに出す（500 の原因調査用）
 		fmt.Printf("Gemini API error: %v\n", err)
@@ -72,4 +86,3 @@ func (s *LLMService) GenerateStory(prompt string) (string, error) {
 
 	return text, nil
 }
-
