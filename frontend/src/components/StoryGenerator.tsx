@@ -91,6 +91,12 @@ const StoryGenerator: React.FC<StoryGeneratorProps> = ( { onStoryGenerated }) =>
           placeholder="文章のプロンプトを入力してください..."
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault();   // 改行を抑制
+              handleGenerate();
+            }
+          }}
           disabled={isLoading}
           maxLength={MAX_PROMPT_CHARS}
         />
