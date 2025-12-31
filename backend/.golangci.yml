@@ -1,0 +1,29 @@
+version: "2"
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  default: none
+  enable:
+    # 戻り値のエラーチェック漏れを検出
+    - errcheck
+    # デフォルトのGoのLint
+    - govet
+    # 意味のない代入の検出
+    - ineffassign
+    # strictな静的解析
+    - staticcheck
+    # 使用されていない定数、変数、関数、Type を検出
+    - unused
+    # 英単語のスペルミスを検出
+    - misspell
+    # 不要な型変換を検出
+    - unconvert
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
+        - unparam

@@ -118,7 +118,7 @@ func (s *UserService) GetGenerationStatus(userID int) (*GenerationStatus, error)
 		currentCount = 0
 	}
 
-	// const dailyLimit = 5 
+	// const dailyLimit = 5
 
 	status := &GenerationStatus{
 		CurrentCount: currentCount,

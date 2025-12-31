@@ -38,7 +38,7 @@ func setupTestDB(t *testing.T) *sqlx.DB {
 		_, err = db.Exec("DELETE FROM users")
 		require.NoError(t, err, "failed to cleanup users table")
 
-		db.Close()
+		_ = db.Close()
 	})
 
 	return db
@@ -80,10 +80,10 @@ func createTestStory(t *testing.T, db *sqlx.DB, userID int, title string, wordCo
 
 func createTestReadingRecord(t *testing.T, db *sqlx.DB, userID, storyID, wordCount int, readAt time.Time) *model.ReadingRecord {
 	record := &model.ReadingRecord{
-		UserID: userID,
-		StoryID: storyID,
+		UserID:    userID,
+		StoryID:   storyID,
 		WordCount: wordCount,
-		ReadAt: readAt,
+		ReadAt:    readAt,
 	}
 
 	query := `

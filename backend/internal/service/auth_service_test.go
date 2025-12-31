@@ -3,8 +3,8 @@ package service
 import (
 	"testing"
 
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
 	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/model"
+	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
