@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"google.golang.org/genai"
@@ -17,11 +16,6 @@ type ILLMService interface {
 type LLMService struct {
 	APIKey string
 	client *genai.Client
-}
-
-func countWords(text string) int {
-	words := strings.Fields(text)
-	return len(words)
 }
 
 func NewLLMService(apiKey string) (ILLMService, error) {
@@ -48,8 +42,8 @@ func (s *LLMService) GenerateStory(prompt string) (string, error) {
 		return "", fmt.Errorf("genai client is not initialized")
 	}
 
-instructionalPrompt := fmt.Sprintf(
-`Write a clear, factual explanation in English based on the user's prompt.
+	instructionalPrompt := fmt.Sprintf(
+		`Write a clear, factual explanation in English based on the user's prompt.
 The user's prompt may be written in Japanese or English.
 Always write the output in English.
 Use standard Markdown for paragraphs and lists where appropriate.
@@ -59,8 +53,8 @@ Return only the Markdown content, without explanations or notes outside the text
 --- USER PROMPT START ---
 %s
 --- USER PROMPT END ---`,
-prompt,
-)
+		prompt,
+	)
 
 	// API 呼び出しにタイムアウトを設定
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)

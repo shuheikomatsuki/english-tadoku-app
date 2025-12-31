@@ -63,7 +63,7 @@ func TestStoryHandler_GetStory(t *testing.T) {
 
 		var receivedResponse StoryDetailResponse
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &receivedResponse))
-		assert.Equal(t, expectedDetail.Story.Title, receivedResponse.Story.Title)
+		assert.Equal(t, expectedDetail.Title, receivedResponse.Title)
 		assert.Equal(t, expectedDetail.ReadCount, receivedResponse.ReadCount)
 
 		mockStoryService.AssertExpectations(t)

@@ -20,13 +20,14 @@ func TestReadingRecordRepository(t *testing.T) {
 	baseTime := time.Now()
 	now := time.Date(baseTime.Year(), baseTime.Month(), baseTime.Day(), 0, 0, 0, 0, baseTime.Location())
 
-	todayRecord1 := createTestReadingRecord(t, db, user1.ID, story1.ID, 100, now.Add(1 * time.Hour))
-	todayRecord2 := createTestReadingRecord(t, db, user1.ID, story2.ID, 200, now.Add(2 * time.Hour))
+	todayRecord1 := createTestReadingRecord(t, db, user1.ID, story1.ID, 100, now.Add(1*time.Hour))
+	todayRecord2 := createTestReadingRecord(t, db, user1.ID, story2.ID, 200, now.Add(2*time.Hour))
 
-	yesterdayRecord := createTestReadingRecord(t, db, user1.ID, story1.ID, 100, now.Add(-10 * time.Hour))
-	twoDaysAgoRecord := createTestReadingRecord(t, db, user1.ID, story1.ID, 100, now.Add(-30 * time.Hour))
+	yesterdayRecord := createTestReadingRecord(t, db, user1.ID, story1.ID, 100, now.Add(-10*time.Hour))
+	twoDaysAgoRecord := createTestReadingRecord(t, db, user1.ID, story1.ID, 100, now.Add(-30*time.Hour))
 
-	if yesterdayRecord == nil || twoDaysAgoRecord == nil {}
+	require.NotNil(t, yesterdayRecord)
+	require.NotNil(t, twoDaysAgoRecord)
 
 	user2 := createTestUser(t, db)
 	story3 := createTestStory(t, db, user2.ID, "Story 3", 50)

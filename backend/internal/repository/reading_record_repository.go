@@ -106,7 +106,7 @@ func (r *sqlxReadingRecordRepository) GetDailyWordCountLastNDays(userID, days in
 	result := make(map[string]int)
 
 	now := anchorTime
-	
+
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
 	for i := 0; i < days; i++ {

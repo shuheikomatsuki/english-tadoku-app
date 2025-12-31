@@ -46,7 +46,7 @@ func TestUserService_GetUserStats(t *testing.T) {
 		assert.Equal(t, 10000, stats.YearlyWordCount)
 		assert.Equal(t, 50000, stats.TotalWordCount)
 		assert.Equal(t, 100, stats.Last7DaysWordCount[todayKey])
-		
+
 		mockReadingRepo.AssertExpectations(t)
 	})
 }
