@@ -7,7 +7,7 @@ interface AuthContextType {
     logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC< { children: ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -16,19 +16,16 @@ export const AuthProvider: React.FC< { children: ReactNode }> = ({ children }) =
         const token = localStorage.getItem('token');
         if (token) {
             setIsAuthenticated(true);
-            // apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         }
     }, []);
 
     const login = (token: string) => {
         localStorage.setItem('token', token);
-        // apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         setIsAuthenticated(true);
     };
 
     const logout = () => {
         localStorage.removeItem('token');
-        // delete apiClient.defaults.headers.common['Authorization'];
         setIsAuthenticated(false);
     };
 
@@ -41,10 +38,10 @@ export const AuthProvider: React.FC< { children: ReactNode }> = ({ children }) =
     );
 };
 
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
-};
+// export const useAuth = () => {
+//     const context = useContext(AuthContext);
+//     if (context === undefined) {
+//         throw new Error('useAuth must be used within an AuthProvider');
+//     }
+//     return context;
+// };
