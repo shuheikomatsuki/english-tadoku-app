@@ -1,13 +1,14 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { /*createContext,*/ useState,/* useContext,*/ useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { AuthContext } from './authContext';
 
-interface AuthContextType {
-    isAuthenticated: boolean;
-    login: (token: string) => void;
-    logout: () => void;
-}
+// interface AuthContextType {
+//     isAuthenticated: boolean;
+//     login: (token: string) => void;
+//     logout: () => void;
+// }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC< { children: ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -37,6 +38,8 @@ export const AuthProvider: React.FC< { children: ReactNode }> = ({ children }) =
         </AuthContext.Provider>
     );
 };
+
+export default AuthProvider;
 
 // export const useAuth = () => {
 //     const context = useContext(AuthContext);
