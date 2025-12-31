@@ -20,7 +20,3 @@ linters:
     - misspell
     # 不要な型変換を検出
     - unconvert
-
-issues:
-  exclude-files:
-    - "_test\\.go"
