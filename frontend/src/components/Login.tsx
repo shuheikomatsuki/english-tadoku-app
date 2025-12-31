@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import apiClient from '../apiClient';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/authContext';
 
 interface LoginProps {
   defaultEmail?: string;

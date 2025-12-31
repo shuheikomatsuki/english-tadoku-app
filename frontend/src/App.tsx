@@ -1,5 +1,5 @@
 import './App.css'
-import { useAuth } from './contexts/AuthContext';
+import { useAuth } from './contexts/authContext';
 import AuthPage from './components/AuthPage';
 import Dashboard from './components/Dashboard';
 import { Routes, Route, Navigate } from 'react-router-dom';

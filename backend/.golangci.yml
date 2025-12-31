@@ -20,10 +20,3 @@ linters:
     - misspell
     # 不要な型変換を検出
     - unconvert
-
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-        - unparam
