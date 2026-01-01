@@ -6,6 +6,7 @@ Terraform による AWS インフラ定義（dev環境）
 - Terraform >= 1.5.0
 - AWS CLI 設定済み
 - region: ap-northeast-1
+- コストを抑えるために現状dev環境では、シングルAZ・ALBなし・NAT Gatewayなしという構成にしている
 
 ## ディレクトリ構成
 ```
