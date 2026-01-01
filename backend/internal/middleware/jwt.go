@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/handler"
+	"github.com/shuheikomatsuki/readoku/backend/internal/handler"
 )
 
 func JWTAuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {

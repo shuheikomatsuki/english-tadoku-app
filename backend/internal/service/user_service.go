@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
+	"github.com/shuheikomatsuki/readoku/backend/internal/repository"
 )
 
 // const (

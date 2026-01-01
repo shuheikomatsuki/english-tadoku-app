@@ -11,10 +11,10 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/handler"
-	authMiddleware "github.com/shuheikomatsuki/english-tadoku-app/backend/internal/middleware"
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/service"
+	"github.com/shuheikomatsuki/readoku/backend/internal/handler"
+	authMiddleware "github.com/shuheikomatsuki/readoku/backend/internal/middleware"
+	"github.com/shuheikomatsuki/readoku/backend/internal/repository"
+	"github.com/shuheikomatsuki/readoku/backend/internal/service"
 )
 
 func main() {

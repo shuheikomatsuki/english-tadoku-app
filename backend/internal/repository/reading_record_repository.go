@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/model"
+	"github.com/shuheikomatsuki/readoku/backend/internal/model"
 )
 
 // IReadingRecordRepository: reading_records テーブルの操作インターフェース

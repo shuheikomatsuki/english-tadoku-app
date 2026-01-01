@@ -3,7 +3,7 @@ package service
 import (
 	"time"
 
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/model"
+	"github.com/shuheikomatsuki/readoku/backend/internal/model"
 	"github.com/stretchr/testify/mock"
 )
 

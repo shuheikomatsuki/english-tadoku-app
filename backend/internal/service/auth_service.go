@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/model"
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
+	"github.com/shuheikomatsuki/readoku/backend/internal/model"
+	"github.com/shuheikomatsuki/readoku/backend/internal/repository"
 	"golang.org/x/crypto/bcrypt"
 )
 

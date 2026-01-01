@@ -7,8 +7,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository"
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/service"
+	"github.com/shuheikomatsuki/readoku/backend/internal/repository"
+	"github.com/shuheikomatsuki/readoku/backend/internal/service"
 )
 
 type IAuthHandler interface {

@@ -9,7 +9,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/model"
+	"github.com/shuheikomatsuki/readoku/backend/internal/model"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 )
