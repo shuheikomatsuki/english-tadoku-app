@@ -9,7 +9,7 @@ const Header: React.FC = () => {
     <header className="bg-white shadow-md">
       <div className="container mx-auto p-4 flex justify-between items-center">
         <Link to="/" className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
-          English Tadoku App
+          Readoku
         </Link>
 
         <nav className="flex items-center">
