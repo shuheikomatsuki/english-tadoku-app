@@ -1,4 +1,4 @@
-module github.com/shuheikomatsuki/english-tadoku-app/backend
+module github.com/shuheikomatsuki/readoku/backend
 
 go 1.24.3
 

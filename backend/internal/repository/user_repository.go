@@ -7,7 +7,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/model"
+	"github.com/shuheikomatsuki/readoku/backend/internal/model"
 )
 
 var ErrEmailAlreadyExists = errors.New("email already exists")

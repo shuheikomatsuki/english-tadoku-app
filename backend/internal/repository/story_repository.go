@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/model"
+	"github.com/shuheikomatsuki/readoku/backend/internal/model"
 )
 
 type IStoryRepository interface {

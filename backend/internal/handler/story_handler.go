@@ -7,8 +7,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/model"
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/service"
+	"github.com/shuheikomatsuki/readoku/backend/internal/model"
+	"github.com/shuheikomatsuki/readoku/backend/internal/service"
 )
 
 type IStoryHandler interface {

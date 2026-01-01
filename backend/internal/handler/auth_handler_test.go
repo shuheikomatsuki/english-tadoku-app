@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/repository" // ErrEmailAlreadyExists の比較用
-	"github.com/shuheikomatsuki/english-tadoku-app/backend/internal/service"    // service パッケージをインポート
+	"github.com/shuheikomatsuki/readoku/backend/internal/repository" // ErrEmailAlreadyExists の比較用
+	"github.com/shuheikomatsuki/readoku/backend/internal/service"    // service パッケージをインポート
 )
 
 func setupAuthTestHandler(t *testing.T) (*MockAuthService, *MockUserService, *echo.Echo) {
