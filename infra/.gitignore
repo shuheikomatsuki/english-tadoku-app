@@ -1,4 +1,19 @@
 .terraform/
 *.tfstate
 *.tfstate.*
+tfplan
 crash.log
+# Terraform variable files (may contain secrets)
+*.tfvars
+*.tfvars.json
+# Allow example variable files to be committed
+!*.example.tfvars
+!*.example.tfvars.json
+# Local Terraform CLI configuration
+.terraformrc
+terraform.rc
+# Local override configuration files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

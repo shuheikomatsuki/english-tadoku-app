@@ -3,7 +3,7 @@
 Terraform による AWS インフラ定義（dev環境）
 
 ## 前提
-- Terraform >= 1.5
+- Terraform >= 1.5.0
 - AWS CLI 設定済み
 - region: ap-northeast-1
 
