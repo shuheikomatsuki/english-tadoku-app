@@ -59,7 +59,7 @@ resource "aws_ecs_task_definition" "backend" {
     name         = "backend"
     image        = "${module.ecr.repository_urls["backend"]}:latest"
     essential    = true
-    portMappings = [{ containerPort = 80, hostPort = 80, protocol = "tcp" }]
+    portMappings = [{ containerPort = 8080, hostPort = 80, protocol = "tcp" }]
     environment  = []
   }])
 
