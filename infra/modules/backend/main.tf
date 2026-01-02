@@ -8,7 +8,7 @@ locals {
     "http://localhost:5173",
     "http://127.0.0.1:5173",
   ] : []
-  
+
   cors_allow_origins = distinct(
     compact(
       concat(
@@ -132,6 +132,9 @@ resource "aws_lambda_function" "api" {
   environment {
     variables = local.lambda_env
   }
+
+  # 関数がログ出力を開始する前に、保持期間ポリシー付きのロググループが確実に作成されているようにする。
+  depends_on = [aws_cloudwatch_log_group.lambda]
 
   tags = var.tags
 }
