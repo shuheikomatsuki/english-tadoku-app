@@ -4,15 +4,19 @@ locals {
     "/${var.project_name}/${var.environment}/",
   )
 
+  dev_cors_allow_origins = var.environment == "dev" ? [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+  ] : []
+  
   cors_allow_origins = distinct(
     compact(
       concat(
         var.allowed_origins,
         [
           var.frontend_url,
-          "http://localhost:5173",
-          "http://127.0.0.1:5173",
-        ]
+        ],
+        local.dev_cors_allow_origins,
       )
     )
   )

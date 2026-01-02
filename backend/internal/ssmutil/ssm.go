@@ -17,8 +17,9 @@ var (
 
 func getClient() (*ssm.Client, error) {
 	clientOnce.Do(func() {
-		cfg, clientErr := config.LoadDefaultConfig(context.Background())
-		if clientErr != nil {
+		cfg, err := config.LoadDefaultConfig(context.Background())
+		if err != nil {
+			clientErr = fmt.Errorf("load AWS default config: %w", err)
 			return
 		}
 		client = ssm.NewFromConfig(cfg)

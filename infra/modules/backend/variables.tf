@@ -29,6 +29,10 @@ variable "lambda_package_path" {
   description = "Path to the zipped Lambda package."
   type        = string
   default     = ""
+  validation {
+    condition = var.enable_backend == false || length(trim(var.lambda_package_path)) > 0
+    error_message = "When enable_backend is true, lambda_package_path must be a non-empty path to the zipped Lambda package."
+  }
 }
 
 variable "lambda_memory_size" {
