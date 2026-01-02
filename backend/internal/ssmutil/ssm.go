@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
@@ -34,8 +35,11 @@ func GetParameter(name string) (string, error) {
 		return "", fmt.Errorf("load SSM client: %w", err)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	withDecryption := true
-	out, err := c.GetParameter(context.Background(), &ssm.GetParameterInput{
+	out, err := c.GetParameter(ctx, &ssm.GetParameterInput{
 		Name:           &name,
 		WithDecryption: &withDecryption,
 	})
