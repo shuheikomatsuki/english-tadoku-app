@@ -1,0 +1,16 @@
+.terraform/
+*.tfstate
+*.tfstate.backup
+crash.log
+override.tf
+override.tf.json
+*.tfvars
+*.tfvars.json
+.terraformrc
+terraform.rc
+*.plan
+
+# mac / editor
+.DS_Store
+.vscode/
+.idea/
