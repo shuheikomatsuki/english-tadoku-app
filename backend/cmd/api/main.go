@@ -8,6 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+	echoadapter "github.com/awslabs/aws-lambda-go-api-proxy/echo"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
@@ -18,6 +21,26 @@ import (
 )
 
 func main() {
+	e := buildServer()
+
+	// Lambda 環境では API Gateway (HTTP API) と接続するハンドラで起動
+	if isLambda() {
+		adapter := echoadapter.NewV2(e)
+		lambda.Start(func(ctx context.Context, req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+			return adapter.ProxyWithContext(ctx, req)
+		})
+		return
+	}
+
+	// ローカル / 常時稼働サーバーモード
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	e.Logger.Fatal(e.Start(":" + port))
+}
+
+func buildServer() *echo.Echo {
 	e := echo.New()
 
 	frontendURL := os.Getenv("FRONTEND_URL")
@@ -127,10 +150,9 @@ func main() {
 	stories.POST("/:id/read", storyHandler.MarkStoryAsRead)
 	stories.DELETE("/:id/read/latest", storyHandler.UndoLastRead)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	return e
+}
 
-	e.Logger.Fatal(e.Start(":" + port))
+func isLambda() bool {
+	return os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != ""
 }

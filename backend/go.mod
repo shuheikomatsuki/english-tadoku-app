@@ -3,6 +3,8 @@ module github.com/shuheikomatsuki/readoku/backend
 go 1.24.3
 
 require (
+	github.com/aws/aws-lambda-go v1.48.0
+	github.com/awslabs/aws-lambda-go-api-proxy v0.16.2
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/jmoiron/sqlx v1.4.0
