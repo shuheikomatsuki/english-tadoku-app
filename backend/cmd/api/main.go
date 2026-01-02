@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -18,9 +19,15 @@ import (
 	authMiddleware "github.com/shuheikomatsuki/readoku/backend/internal/middleware"
 	"github.com/shuheikomatsuki/readoku/backend/internal/repository"
 	"github.com/shuheikomatsuki/readoku/backend/internal/service"
+	"github.com/shuheikomatsuki/readoku/backend/internal/ssmutil"
 )
 
 func main() {
+	// Ensure secrets (e.g., JWT, GEMINI_API_KEY) are available. Falls back to SSM if env is empty.
+	if err := loadSecretsFromSSM(); err != nil {
+		log.Fatalf("failed to load secrets: %v", err)
+	}
+
 	e := buildServer()
 
 	// Lambda 環境では API Gateway (HTTP API) と接続するハンドラで起動
@@ -155,4 +162,32 @@ func buildServer() *echo.Echo {
 
 func isLambda() bool {
 	return os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != ""
+}
+
+func loadSecretsFromSSM() error {
+	type target struct {
+		envKey   string
+		paramKey string
+	}
+
+	for _, t := range []target{
+		{envKey: "JWT_SECRET", paramKey: "JWT_SECRET_PARAM"},
+		{envKey: "GEMINI_API_KEY", paramKey: "GEMINI_API_KEY_PARAM"},
+	} {
+		if os.Getenv(t.envKey) != "" {
+			continue
+		}
+		param := os.Getenv(t.paramKey)
+		if param == "" {
+			return fmt.Errorf("%s or %s must be set", t.envKey, t.paramKey)
+		}
+		v, err := ssmutil.GetParameter(param)
+		if err != nil {
+			return fmt.Errorf("fetch %s from SSM (%s): %w", t.envKey, param, err)
+		}
+		if err := os.Setenv(t.envKey, v); err != nil {
+			return fmt.Errorf("set %s from SSM: %w", t.envKey, err)
+		}
+	}
+	return nil
 }
