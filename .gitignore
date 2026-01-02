@@ -5,3 +5,6 @@
 /backend/function.zip
 /backend/bootstrap
 /backend/*.zip
+
+/infra/trust*.json
+/infra/policy*.json
