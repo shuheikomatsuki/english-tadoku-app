@@ -1,0 +1,59 @@
+name: Backend Deploy (Lambda code only)
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch: {}
+
+env:
+  AWS_REGION: ap-northeast-1
+  LAMBDA_FUNCTION_NAME: readoku-dev-api
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: backend-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_BACKEND_DEPLOY_ROLE_ARN }}
+          role-session-name: github-actions-backend-deploy
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache: true
+
+      - name: Go mod download
+        run: go mod download
+
+      - name: Build Lambda binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o bootstrap ./cmd/api
+
+      - name: Create deployment package
+        run: |
+          rm -f function.zip
+          zip function.zip bootstrap
+
+      - name: Update Lambda code
+        run: aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --zip-file fileb://function.zip
