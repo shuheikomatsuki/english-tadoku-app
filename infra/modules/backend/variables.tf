@@ -30,7 +30,7 @@ variable "lambda_package_path" {
   type        = string
   default     = ""
   validation {
-    condition = var.enable_backend == false || length(trim(var.lambda_package_path)) > 0
+    condition = var.enable_backend == false || length(trimspace(var.lambda_package_path)) > 0
     error_message = "When enable_backend is true, lambda_package_path must be a non-empty path to the zipped Lambda package."
   }
 }

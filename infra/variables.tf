@@ -48,3 +48,27 @@ variable "backend_daily_generation_limit" {
   type        = number
   default     = 10
 }
+
+variable "backend_log_retention_in_days" {
+  description = "CloudWatch log retention for backend Lambda."
+  type        = number
+  default     = 14
+}
+
+variable "backend_lambda_memory_size" {
+  description = "Memory size (MB) for backend Lambda."
+  type        = number
+  default     = 256
+}
+
+variable "backend_lambda_timeout_seconds" {
+  description = "Timeout (seconds) for backend Lambda."
+  type        = number
+  default     = 30
+}
+
+variable "backend_lambda_architectures" {
+  description = "Architectures for backend Lambda."
+  type        = list(string)
+  default     = ["arm64"]
+}

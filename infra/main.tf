@@ -22,8 +22,8 @@ module "backend" {
   allowed_origins        = var.backend_allowed_origins
   daily_generation_limit = var.backend_daily_generation_limit
   parameter_prefix_override = null
-  log_retention_in_days     = 14
-  lambda_memory_size        = 256
-  lambda_timeout_seconds    = 30
-  lambda_architectures      = ["arm64"]
+  log_retention_in_days     = var.backend_log_retention_in_days
+  lambda_memory_size        = var.backend_lambda_memory_size
+  lambda_timeout_seconds    = var.backend_lambda_timeout_seconds
+  lambda_architectures      = var.backend_lambda_architectures
 }
