@@ -2,3 +2,6 @@
 /node_modules
 /dist
 /.vite
+/backend/function.zip
+/backend/bootstrap
+/backend/*.zip
