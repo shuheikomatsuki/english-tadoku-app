@@ -112,6 +112,7 @@ https://readoku-dev.onrender.com
                         │   Gemini API    │
                         └─────────────────┘
 ```
+![image](![alt text](image.png))
 
 ---
 
