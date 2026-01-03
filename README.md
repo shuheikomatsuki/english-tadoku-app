@@ -8,7 +8,12 @@ AI を活用した英語多読学習支援アプリケーション
 
 ## 🌐 公開 URL
 
+**Renderでデプロイ**  
 https://readoku-dev.onrender.com
+
+**AWSでデプロイ・ドメイン未取得**  
+https://d2znqoyfh4mlix.cloudfront.net
+
 
 ---
 
@@ -112,6 +117,7 @@ https://readoku-dev.onrender.com
                         │   Gemini API    │
                         └─────────────────┘
 ```
+![alt text](image.png)
 
 ---
 
