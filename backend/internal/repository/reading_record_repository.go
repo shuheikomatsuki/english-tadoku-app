@@ -106,25 +106,41 @@ func (r *sqlxReadingRecordRepository) GetDailyWordCountLastNDays(userID, days in
 	result := make(map[string]int)
 
 	now := anchorTime
-
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
+	// Pre-fill the map so missing days are returned as zero.
 	for i := 0; i < days; i++ {
-		startDate := today.AddDate(0, 0, -i)
-		endDate := startDate.AddDate(0, 0, 1)
-
-		var dailyCount int
-		query := `
-			SELECT COALESCE(SUM(word_count), 0)
-			FROM reading_records
-			WHERE user_id = $1 AND read_at >= $2 AND read_at < $3
-		`
-		err := r.DB.Get(&dailyCount, query, userID, startDate, endDate)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get daily word count for %s: %w", startDate.Format("2006-01-02"), err)
-		}
-
-		result[startDate.Format("2006-01-02")] = dailyCount
+		day := today.AddDate(0, 0, -i)
+		result[day.Format("2006-01-02")] = 0
 	}
+
+	startDate := today.AddDate(0, 0, -(days - 1))
+	endDate := today.AddDate(0, 0, 1)
+
+	type dailyRow struct {
+		Day   time.Time `db:"day"`
+		Total int       `db:"total"`
+	}
+
+	query := `
+		SELECT
+			date_trunc('day', read_at) AS day,
+			SUM(word_count) AS total
+		FROM reading_records
+		WHERE user_id = $1
+		  AND read_at >= $2
+		  AND read_at < $3
+		GROUP BY day
+	`
+
+	var rows []dailyRow
+	if err := r.DB.Select(&rows, query, userID, startDate, endDate); err != nil {
+		return nil, fmt.Errorf("failed to get daily word count: %w", err)
+	}
+
+	for _, row := range rows {
+		result[row.Day.Format("2006-01-02")] = row.Total
+	}
+
 	return result, nil
 }
