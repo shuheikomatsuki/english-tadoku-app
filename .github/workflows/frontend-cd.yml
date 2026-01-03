@@ -6,8 +6,7 @@ on:
       - develop
     paths:
       - frontend/**
-      - package.json
-      - package-lock.json
+      - .github/workflows/frontend-cd.yml
   workflow_dispatch: {}
 
 env:
