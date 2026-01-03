@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - develop
+    paths:
+      - frontend/**
+      - .github/workflows/frontend-cd.yml
   workflow_dispatch: {}
 
 env:
