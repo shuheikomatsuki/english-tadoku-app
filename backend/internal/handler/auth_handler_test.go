@@ -16,6 +16,7 @@ import (
 
 	"github.com/shuheikomatsuki/readoku/backend/internal/repository" // ErrEmailAlreadyExists の比較用
 	"github.com/shuheikomatsuki/readoku/backend/internal/service"    // service パッケージをインポート
+	"github.com/shuheikomatsuki/readoku/backend/internal/timeutil"
 )
 
 func setupAuthTestHandler(t *testing.T) (*MockAuthService, *MockUserService, *echo.Echo) {
@@ -31,7 +32,7 @@ func TestAuthHandler_SignUp(t *testing.T) {
 	h := NewAuthHandler(mockAuthSvc, nil)
 
 	t.Run("success: should create a new user", func(t *testing.T) {
-		email := fmt.Sprintf("signup-test-%d@example.com", time.Now().UnixNano())
+		email := fmt.Sprintf("signup-test-%d@example.com", timeutil.NowTokyo().UnixNano())
 		password := "password123"
 		requestBody := fmt.Sprintf(`{"email": "%s", "password": "%s"}`, email, password)
 		mockAuthSvc.On("SignUp", email, password).Return(nil).Once()
@@ -128,7 +129,7 @@ func TestAuthHandler_GetUserStats(t *testing.T) {
 
 	claims := &JwtCustomClaims{
 		testUserID,
-		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1))},
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(timeutil.NowTokyo().Add(time.Hour * 1))},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
@@ -140,7 +141,7 @@ func TestAuthHandler_GetUserStats(t *testing.T) {
 			WeeklyWordCount:    300,
 			MonthlyWordCount:   500,
 			YearlyWordCount:    800,
-			Last7DaysWordCount: map[string]int{time.Now().Format("2006-01-02"): 100},
+			Last7DaysWordCount: map[string]int{timeutil.NowTokyo().Format("2006-01-02"): 100},
 		}
 
 		mockUserSvc.On("GetUserStats", testUserID).Return(expectedStats, nil).Once()
@@ -159,7 +160,7 @@ func TestAuthHandler_GetUserStats(t *testing.T) {
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
 		assert.Equal(t, expectedStats.TotalWordCount, response.TotalWordCount)
 		assert.Equal(t, expectedStats.TodayWordCount, response.TodayWordCount)
-		assert.Equal(t, expectedStats.Last7DaysWordCount[time.Now().Format("2006-01-02")], response.Last7DaysWordCount[time.Now().Format("2006-01-02")])
+		assert.Equal(t, expectedStats.Last7DaysWordCount[timeutil.NowTokyo().Format("2006-01-02")], response.Last7DaysWordCount[timeutil.NowTokyo().Format("2006-01-02")])
 
 		mockUserSvc.AssertExpectations(t)
 	})
@@ -171,7 +172,7 @@ func TestAuthHandler_GetGenetationStatus(t *testing.T) {
 
 	claims := &JwtCustomClaims{
 		testUserID,
-		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1))},
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(timeutil.NowTokyo().Add(time.Hour * 1))},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 

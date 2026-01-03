@@ -2,8 +2,8 @@ package service
 
 import (
 	"testing"
-	"time"
 
+	"github.com/shuheikomatsuki/readoku/backend/internal/timeutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -32,7 +32,7 @@ func TestUserService_GetUserStats(t *testing.T) {
 			Once()
 
 		mockReadingRepo.On("GetUserTotalWordCount", testUser.ID).Return(50000, nil).Once()
-		now := time.Now()
+		now := timeutil.NowTokyo()
 		todayKey := now.Format("2006-01-02")
 		mockLast7Days := map[string]int{todayKey: 100}
 		mockReadingRepo.On("GetDailyWordCountLastNDays", testUser.ID, 7, mock.AnythingOfType("time.Time")).Return(mockLast7Days, nil).Once()
@@ -61,7 +61,7 @@ func TestUserService_GetGenerationStatus(t *testing.T) {
 	t.Run("success: should return current count if generated today", func(t *testing.T) {
 		userState := baseUser
 		userState.GenerationCount = 3
-		today := time.Now()
+		today := timeutil.NowTokyo()
 		userState.LastGenerationAt = &today
 
 		mockUserRepo.On("GetUserByID", testUser.ID).Return(&userState, nil).Once()
@@ -78,7 +78,7 @@ func TestUserService_GetGenerationStatus(t *testing.T) {
 	t.Run("success: should return 0 if last generation was yesterday", func(t *testing.T) {
 		userState := baseUser
 		userState.GenerationCount = 5
-		yesterday := time.Now().AddDate(0, 0, -1)
+		yesterday := timeutil.NowTokyo().AddDate(0, 0, -1)
 		userState.LastGenerationAt = &yesterday
 
 		mockUserRepo.On("GetUserByID", testUser.ID).Return(&userState, nil).Once()

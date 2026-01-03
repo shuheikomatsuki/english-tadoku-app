@@ -11,11 +11,8 @@ import (
 
 	"github.com/shuheikomatsuki/readoku/backend/internal/model"
 	"github.com/shuheikomatsuki/readoku/backend/internal/repository"
+	"github.com/shuheikomatsuki/readoku/backend/internal/timeutil"
 )
-
-// const (
-// 	dailyGenerationLimit = 1
-// )
 
 // PaginatedStories はサービス層が返すページネーション結果のモデル
 type PaginatedStories struct {
@@ -75,13 +72,13 @@ func (s *StoryService) GenerateStory(userID int, prompt string) (*model.Story, e
 		return nil, fmt.Errorf("failed to get user for validation: %w", err)
 	}
 
-	now := time.Now()
-	todayStart := time.Date(now.UTC().Year(), now.UTC().Month(), now.UTC().Day(), 0, 0, 0, 0, time.UTC)
+	now := timeutil.NowTokyo()
+	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, timeutil.Tokyo())
 
 	currentCount := user.GenerationCount
 	lastGen := user.LastGenerationAt
 
-	if lastGen != nil && lastGen.UTC().Before(todayStart) {
+	if lastGen != nil && lastGen.In(timeutil.Tokyo()).Before(todayStart) {
 		currentCount = 0
 	}
 

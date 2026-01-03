@@ -38,6 +38,10 @@ func NewDBConnection() (*sqlx.DB, error) {
 		return nil, fmt.Errorf("failed to open DB: %w", err)
 	}
 
+	if _, err := db.Exec("SET TIME ZONE 'Asia/Tokyo'"); err != nil {
+		return nil, fmt.Errorf("failed to set time zone: %w", err)
+	}
+
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to connect DB: %w", err)
 	}

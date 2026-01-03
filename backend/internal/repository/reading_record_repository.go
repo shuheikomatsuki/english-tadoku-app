@@ -6,6 +6,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/shuheikomatsuki/readoku/backend/internal/model"
+	"github.com/shuheikomatsuki/readoku/backend/internal/timeutil"
 )
 
 // IReadingRecordRepository: reading_records テーブルの操作インターフェース
@@ -105,8 +106,8 @@ func (r *sqlxReadingRecordRepository) GetWordCountInDateRange(userID int, start,
 func (r *sqlxReadingRecordRepository) GetDailyWordCountLastNDays(userID, days int, anchorTime time.Time) (map[string]int, error) {
 	result := make(map[string]int)
 
-	now := anchorTime
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	now := anchorTime.In(timeutil.Tokyo())
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, timeutil.Tokyo())
 
 	// Pre-fill the map so missing days are returned as zero.
 	for i := 0; i < days; i++ {
@@ -124,7 +125,7 @@ func (r *sqlxReadingRecordRepository) GetDailyWordCountLastNDays(userID, days in
 
 	query := `
 		SELECT
-			date_trunc('day', read_at) AS day,
+			date_trunc('day', read_at AT TIME ZONE 'Asia/Tokyo') AS day,
 			SUM(word_count) AS total
 		FROM reading_records
 		WHERE user_id = $1

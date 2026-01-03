@@ -3,9 +3,9 @@ package service
 import (
 	"database/sql"
 	"testing"
-	"time"
 
 	"github.com/shuheikomatsuki/readoku/backend/internal/model"
+	"github.com/shuheikomatsuki/readoku/backend/internal/timeutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -68,7 +68,7 @@ func TestStoryService_GenerateStory(t *testing.T) {
 		// 1. ユーザーの状態 (昨日5回生成済み)
 		userState := baseUser
 		userState.GenerationCount = 5
-		yesterday := time.Now().AddDate(0, 0, -1) // 昨日の日付
+		yesterday := timeutil.NowTokyo().AddDate(0, 0, -1) // 昨日の日付
 		userState.LastGenerationAt = &yesterday
 
 		// GetUserByID が呼ばれる
@@ -95,7 +95,7 @@ func TestStoryService_GenerateStory(t *testing.T) {
 		// ユーザーの状態 (今日すでに5回生成済み)
 		userState := baseUser
 		userState.GenerationCount = testDailyLimit // 制限(5)に達している
-		today := time.Now()
+		today := timeutil.NowTokyo()
 		userState.LastGenerationAt = &today
 
 		// GetUserByID が呼ばれる

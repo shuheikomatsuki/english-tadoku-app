@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/shuheikomatsuki/readoku/backend/internal/timeutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,8 +18,8 @@ func TestReadingRecordRepository(t *testing.T) {
 	story2 := createTestStory(t, db, user1.ID, "Story 2", 200)
 
 	// now := time.Now().Truncate(24 * time.Hour)
-	baseTime := time.Now()
-	now := time.Date(baseTime.Year(), baseTime.Month(), baseTime.Day(), 0, 0, 0, 0, baseTime.Location())
+	baseTime := timeutil.NowTokyo()
+	now := time.Date(baseTime.Year(), baseTime.Month(), baseTime.Day(), 0, 0, 0, 0, timeutil.Tokyo())
 
 	todayRecord1 := createTestReadingRecord(t, db, user1.ID, story1.ID, 100, now.Add(1*time.Hour))
 	todayRecord2 := createTestReadingRecord(t, db, user1.ID, story2.ID, 200, now.Add(2*time.Hour))

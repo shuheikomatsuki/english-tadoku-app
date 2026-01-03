@@ -5,11 +5,8 @@ import (
 	"time"
 
 	"github.com/shuheikomatsuki/readoku/backend/internal/repository"
+	"github.com/shuheikomatsuki/readoku/backend/internal/timeutil"
 )
-
-// const (
-// 	dailyGenerationLimit = 5
-// )
 
 type UserStats struct {
 	TotalWordCount     int
@@ -45,10 +42,10 @@ func NewUserService(readingRecordRepo repository.IReadingRecordRepository, userR
 }
 
 func (s *UserService) GetUserStats(userID int) (*UserStats, error) {
-	now := time.Now()
+	now := timeutil.NowTokyo()
 
-	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	todayCount, err := s.ReadingRecordRepo.GetWordCountInDateRange(userID, startOfDay, now.Add(24*time.Hour))
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, timeutil.Tokyo())
+	todayCount, err := s.ReadingRecordRepo.GetWordCountInDateRange(userID, startOfDay, startOfDay.Add(24*time.Hour))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user stats (today): %w", err)
 	}
@@ -64,13 +61,13 @@ func (s *UserService) GetUserStats(userID int) (*UserStats, error) {
 		return nil, fmt.Errorf("failed to get user stats (weekly): %w", err)
 	}
 
-	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, timeutil.Tokyo())
 	monthlyCount, err := s.ReadingRecordRepo.GetWordCountInDateRange(userID, startOfMonth, startOfMonth.AddDate(0, 1, 0))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user stats (monthly): %w", err)
 	}
 
-	startOfYear := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location())
+	startOfYear := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, timeutil.Tokyo())
 	yearlyCount, err := s.ReadingRecordRepo.GetWordCountInDateRange(userID, startOfYear, startOfYear.AddDate(1, 0, 0))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user stats (yearly): %w", err)
@@ -108,13 +105,13 @@ func (s *UserService) GetGenerationStatus(userID int) (*GenerationStatus, error)
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	now := time.Now()
-	todayStart := time.Date(now.UTC().Year(), now.UTC().Month(), now.UTC().Day(), 0, 0, 0, 0, time.UTC)
+	now := timeutil.NowTokyo()
+	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, timeutil.Tokyo())
 
 	currentCount := user.GenerationCount
 	lastGen := user.LastGenerationAt
 
-	if lastGen != nil && lastGen.UTC().Before(todayStart) {
+	if lastGen != nil && lastGen.In(timeutil.Tokyo()).Before(todayStart) {
 		currentCount = 0
 	}
 
