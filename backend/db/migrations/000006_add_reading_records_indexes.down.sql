@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS idx_reading_records_user_story_read_at_desc;
+DROP INDEX IF EXISTS idx_reading_records_user_id_read_at;
