@@ -1,0 +1,29 @@
+name: Run Migrations
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - backend/db/migrations/**
+  workflow_dispatch: {}
+
+concurrency:
+  group: migrations
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run migrations
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/backend/db/migrations:/migrations \
+            migrate/migrate \
+            -path /migrations \
+            -database "${{ secrets.NEON_DEV_DATABASE_URL }}" up
