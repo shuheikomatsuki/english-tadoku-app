@@ -9,6 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/shuheikomatsuki/readoku/backend/internal/model"
 	"github.com/shuheikomatsuki/readoku/backend/internal/repository"
+	"github.com/shuheikomatsuki/readoku/backend/internal/timeutil"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -73,7 +74,7 @@ func (s *AuthService) GenerateToken(userID int) (string, error) {
 	claims := &JwtCustomClaims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
+			ExpiresAt: jwt.NewNumericDate(timeutil.NowTokyo().Add(time.Hour * 72)),
 		},
 	}
 

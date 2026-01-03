@@ -17,6 +17,7 @@ import (
 
 	"github.com/shuheikomatsuki/readoku/backend/internal/model"
 	"github.com/shuheikomatsuki/readoku/backend/internal/service"
+	"github.com/shuheikomatsuki/readoku/backend/internal/timeutil"
 )
 
 const (
@@ -31,7 +32,7 @@ func setupTestHandler(t *testing.T) (*MockStoryService, *echo.Echo, *jwt.Token) 
 
 	claims := &JwtCustomClaims{
 		testUserID,
-		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1))},
+		jwt.RegisteredClaims{ExpiresAt: jwt.NewNumericDate(timeutil.NowTokyo().Add(time.Hour * 1))},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
