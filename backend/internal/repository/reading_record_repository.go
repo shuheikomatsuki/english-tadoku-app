@@ -127,7 +127,7 @@ func (r *sqlxReadingRecordRepository) GetDailyWordCountLastNDays(userID, days in
 		SELECT
 			date_trunc('day', read_at AT TIME ZONE 'Asia/Tokyo') AS day,
 			SUM(word_count) AS total
-		FROM reading_records
+		FROM reading_records 
 		WHERE user_id = $1
 		  AND read_at >= $2
 		  AND read_at < $3

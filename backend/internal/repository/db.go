@@ -25,7 +25,7 @@ func NewDBConnection() (*sqlx.DB, error) {
 	}
 
 	dsn := fmt.Sprintf(
-		"host=%s port=5432 user=%s password=%s dbname=%s sslmode=%s",
+		"host=%s port=5432 user=%s password=%s dbname=%s sslmode=%s timezone=Asia/Tokyo",
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
@@ -36,10 +36,6 @@ func NewDBConnection() (*sqlx.DB, error) {
 	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open DB: %w", err)
-	}
-
-	if _, err := db.Exec("SET TIME ZONE 'Asia/Tokyo'"); err != nil {
-		return nil, fmt.Errorf("failed to set time zone: %w", err)
 	}
 
 	if err := db.Ping(); err != nil {
