@@ -8,6 +8,10 @@ on:
       - backend/db/migrations/**
   workflow_dispatch: {}
 
+concurrency:
+  group: migrations
+  cancel-in-progress: false
+
 jobs:
   migrate:
     runs-on: ubuntu-latest
