@@ -8,7 +8,10 @@ AI を活用した英語多読学習支援アプリケーション
 
 ## 🌐 公開 URL
 
-https://readoku-dev.onrender.com
+https://readoku-dev.onrender.com（Renderにてデプロイ）
+
+https://d2znqoyfh4mlix.cloudfront.net (AWSにてデプロイ・ドメイン未取得)
+
 
 ---
 
