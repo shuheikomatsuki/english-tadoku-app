@@ -3,7 +3,7 @@ module github.com/shuheikomatsuki/readoku/backend
 go 1.24.3
 
 require (
-	github.com/aws/aws-lambda-go v1.48.0
+	github.com/aws/aws-lambda-go v1.51.1
 	github.com/aws/aws-sdk-go-v2/config v1.32.6
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.67.7
 	github.com/awslabs/aws-lambda-go-api-proxy v0.16.2
